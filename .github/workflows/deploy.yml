@@ -10,6 +10,7 @@
 #
 # Runs on every push, every Monday (to refresh the licensed text, as the ESV and
 # API.Bible terms ask), and on demand from the Actions tab ("Run workflow").
+# If a service fails (e.g. a usage limit), the copy already live is kept for up to 28 days.
 # A missing key just leaves that translation out; the site still deploys.
 
 name: Deploy site
@@ -45,15 +46,17 @@ jobs:
           mkdir -p _site
           rsync -a --exclude '.git' --exclude '.github' --exclude 'scripts' --exclude 'README.md' --exclude '_site' ./ _site/
 
+      - uses: actions/configure-pages@v5
+        id: pages
+
       - name: Add ESV, CSB and NASB text
         env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
           ESV_API_KEY: ${{ secrets.ESV_API_KEY }}
           API_BIBLE_KEY: ${{ secrets.API_BIBLE_KEY }}
           CSB_BIBLE_ID: ${{ vars.CSB_BIBLE_ID }}
           NASB_BIBLE_ID: ${{ vars.NASB_BIBLE_ID }}
         run: node scripts/fetch-licensed.mjs _site/index.html
-
-      - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:

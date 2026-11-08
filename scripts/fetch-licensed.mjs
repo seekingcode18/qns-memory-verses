@@ -9,8 +9,10 @@
 // Optional repository variables, if the automatic choice of Bible is wrong:
 //   CSB_BIBLE_ID, NASB_BIBLE_ID
 //
-// Each translation is independent: if a key is missing or a request fails, that translation
-// is left out and the rest of the page still deploys.
+// Each translation is independent. If a request fails (e.g. a usage limit is hit), the text
+// from the version already live (SITE_URL) is reused, provided it was fetched within the last
+// MAX_AGE_DAYS (API.Bible requires a refresh at least every 30 days). Otherwise, or if a key
+// is missing, that translation is left out and the rest of the page still deploys.
 
 import { readFile, writeFile } from "node:fs/promises";
 
@@ -18,6 +20,9 @@ const file = process.argv[2] || "index.html";
 const ESV_API = process.env.ESV_API_URL || "https://api.esv.org/v3/passage/text/";
 const ABS_API = process.env.API_BIBLE_URL || "https://rest.api.bible/v1";
 const DELAY = Number(process.env.REQUEST_DELAY_MS ?? 1100);
+const SITE_URL = (process.env.SITE_URL || "").replace(/\/+$/, "");
+const MAX_AGE_DAYS = 28;
+const today = () => new Date().toISOString().slice(0, 10);
 
 // For part-verses ("1b", "7b"), the text starts at the first of these phrases found.
 const PART_VERSE_START = {
@@ -55,27 +60,40 @@ async function main() {
   const refs = [...new Set(sessions.flatMap((s) => [s.main, ...s.optional]).map((p) => p.ref))].map(parseRef);
 
   const translations = {};
+  const previous = await loadPrevious();
+  // Use the live copy of a translation if it's recent enough; otherwise leave it out
+  const reuse = (key) => {
+    const t = previous[key];
+    const age = t && t.fetched ? (Date.parse(today()) - Date.parse(t.fetched)) / 864e5 : Infinity;
+    if (age <= MAX_AGE_DAYS) {
+      warn(`${key.toUpperCase()}: keeping the copy from ${t.fetched} that's already live.`);
+      translations[key] = t;
+    } else {
+      warn(`${key.toUpperCase()}: no live copy from the last ${MAX_AGE_DAYS} days, so it is left out.`);
+    }
+  };
 
   if (process.env.ESV_API_KEY) {
     const t = await safely("ESV", () => esv(refs));
-    if (t) translations.esv = t;
+    t ? (translations.esv = t) : reuse("esv");
   } else warn("ESV_API_KEY is not set, so the ESV is left out.");
 
   if (process.env.API_BIBLE_KEY) {
     const bibles = await safely("API.Bible", listBibles);
-    if (bibles) {
+    if (!bibles) { reuse("csb"); reuse("nasb"); }
+    else {
       for (const [key, pick] of [["csb", pickCSB], ["nasb", pickNASB]]) {
         const bible = pick(bibles);
         if (!bible) { warn(`No ${key.toUpperCase()} is enabled on your API.Bible key, so it is left out.`); continue; }
         const t = await safely(key.toUpperCase(), () => apiBible(bible, refs));
-        if (t) translations[key] = t;
+        t ? (translations[key] = t) : reuse(key);
       }
     }
   } else warn("API_BIBLE_KEY is not set, so the CSB and NASB are left out.");
 
   if (!Object.keys(translations).length) { console.log("No licensed translations added."); return; }
 
-  const data = { updated: new Date().toISOString().slice(0, 10), translations };
+  const data = { updated: today(), translations };
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const out = html.replace(
     /(<script id="licensed-data" type="application\/json">)[\s\S]*?(<\/script>)/,
@@ -89,9 +107,24 @@ async function main() {
   }
 }
 
+// The licensed text in the version of the site that's currently live, if any
+async function loadPrevious() {
+  if (!SITE_URL) return {};
+  try {
+    const res = await fetch(SITE_URL + "/", { headers: { "cache-control": "no-cache" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const m = (await res.text()).match(/<script id="licensed-data" type="application\/json">([\s\S]*?)<\/script>/);
+    const data = m ? JSON.parse(m[1]) : null;
+    return (data && data.translations) || {};
+  } catch (e) {
+    console.log(`Couldn't read the live site for fallback text (${e.message}).`);
+    return {};
+  }
+}
+
 async function safely(label, fn) {
   try { return await fn(); }
-  catch (e) { warn(`${label} failed (${e.message}), so it is left out.`); return null; }
+  catch (e) { warn(`${label} failed (${e.message}).`); return null; }
 }
 
 // "Romans 8:31–32, 37" -> { ref, book, chapter, ranges: [[31,32],[37,37]], partials: [] }
@@ -141,7 +174,12 @@ async function getJSON(url, headers, label) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const res = await fetch(url, { headers });
-      if (res.status === 429) { await sleep((Number(res.headers.get("retry-after")) || 60) * 1000); continue; }
+      if (res.status === 429) {
+        const wait = Number(res.headers.get("retry-after")) || 60;
+        if (wait > 120 || attempt === 3) throw new Error(`usage limit reached (retry after ${wait}s)`);
+        console.log(`  ${label}: usage limit, waiting ${wait}s`);
+        await sleep(wait * 1000); continue;
+      }
       if (res.status === 401 || res.status === 403) throw Object.assign(new Error(`HTTP ${res.status} (check the key)`), { fatal: true });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -178,7 +216,7 @@ async function esv(refs) {
     await sleep(DELAY); // ESV allows 60 requests a minute
   }
   return {
-    name: "English Standard Version", abbr: "ESV", passages,
+    name: "English Standard Version", abbr: "ESV", fetched: today(), passages,
     notice: ESV_NOTICE, links: [["www.esv.org", "https://www.esv.org"]],
   };
 }
@@ -242,7 +280,7 @@ async function apiBible(bible, refs) {
   const links = [["API.Bible", "https://api.bible"]];
   if (/NASB|LSB/i.test(abbr)) links.unshift(["www.lockman.org", "https://www.lockman.org"]);
   return {
-    name: meta.name || abbr, abbr, passages, fums,
+    name: meta.name || abbr, abbr, fetched: today(), passages, fums,
     notice: clean(String(copyright).replace(/<[^>]+>/g, " ")) || `${meta.name || abbr}. Used by permission.`,
     links,
   };

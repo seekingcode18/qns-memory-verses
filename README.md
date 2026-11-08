@@ -8,7 +8,9 @@ A single-page site of memory verses for each QNS session, published with GitHub 
 - On every push, every Monday, and on demand, the **Deploy site** workflow
   (`.github/workflows/deploy.yml`) publishes the site and, on the way, adds the ESV, CSB
   and NASB using `scripts/fetch-licensed.mjs`. The licensed text is never committed here.
-- A translation whose key is missing is simply left out; the site still deploys.
+- If a service fails or a usage limit is hit, the copy of that translation already live is kept,
+  for up to 28 days since it was last fetched. After that (or if its key is missing) the
+  translation is left out; the site still deploys.
 
 ## One-time setup
 
