@@ -2824,7 +2824,6 @@
     const els = sec.querySelectorAll(".verse-card");
     [s.main, ...s.optional].forEach((p, i) => { els[i].__p = p; cards.push({ el: els[i], p }); });
   });
-  document.querySelectorAll(".session-label").forEach(h => h.style.margin = "0");
 
   // ---------- Online translations (bible-api.com) ----------
   const memCache = {};
