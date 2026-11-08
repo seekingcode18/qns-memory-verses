@@ -1,0 +1,3026 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QNS Memory Verses</title>
+<meta name="description" content="QNS Memory Verses, grouped by session.">
+<script>
+  // Apply saved theme before first paint to avoid a flash
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("qns-theme"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f3ee; --bg-2: #efe9e0; --card: #fffdf9; --card-2: #fbf8f3;
+    --ink: #1f1c18; --muted: #6f675d; --line: #e4dccf;
+    --accent: #9a6b3c; --accent-soft: #f1e6d8; --on-accent: #fff;
+    --shadow: 0 1px 2px rgba(40,30,20,.04), 0 8px 24px rgba(40,30,20,.06);
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  [data-theme="dark"] {
+    --bg: #141210; --bg-2: #1b1815; --card: #1f1c19; --card-2: #1a1815;
+    --ink: #efe8dd; --muted: #a69d90; --line: #322d27;
+    --accent: #d4a373; --accent-soft: #2d241b; --on-accent: #1a1510;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; font-family: var(--sans); color: var(--ink); line-height: 1.5; min-height: 100vh;
+    background: radial-gradient(1200px 500px at 50% -200px, var(--bg-2), transparent 70%), var(--bg);
+    transition: background-color .25s, color .25s;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: saturate(140%) blur(12px); -webkit-backdrop-filter: saturate(140%) blur(12px);
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { max-width: 880px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { font-family: var(--serif); font-weight: 600; font-size: 1.35rem; letter-spacing: .01em; }
+  .controls { display: flex; align-items: center; gap: 8px; position: relative; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: ""; position: absolute; right: 14px; top: 50%; width: 7px; height: 7px;
+    border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted);
+    transform: translateY(-70%) rotate(45deg); pointer-events: none;
+  }
+  select, .btn {
+    font: 500 .875rem var(--sans); color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 9px 38px 9px 16px;
+    appearance: none; -webkit-appearance: none; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+    max-width: 62vw; text-overflow: ellipsis;
+  }
+  .btn { padding: 9px 14px; display: inline-flex; align-items: center; gap: 7px; }
+  .btn svg { width: 16px; height: 16px; }
+  select:hover, .btn:hover { border-color: var(--accent); }
+  :is(select, .btn, .copy, .verse-card, .switch input):focus-visible {
+    outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* Options panel */
+  .panel {
+    position: absolute; right: 0; top: calc(100% + 10px); width: 280px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 8px; display: none;
+  }
+  .panel.open { display: block; }
+  .panel h3 { margin: 6px 10px 4px; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px; border-radius: 10px; cursor: pointer; font-size: .9rem; }
+  .switch:hover { background: var(--accent-soft); }
+  .switch small { display: block; color: var(--muted); font-size: .76rem; margin-top: 1px; }
+  .switch input {
+    appearance: none; -webkit-appearance: none; flex: none; width: 38px; height: 22px; border-radius: 999px;
+    background: var(--line); position: relative; cursor: pointer; transition: background .2s; margin: 0;
+  }
+  .switch input::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s;
+  }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+
+  /* Hero */
+  .hero { max-width: 880px; margin: 0 auto; padding: 60px 20px 18px; text-align: center; }
+  .eyebrow { font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2.6rem, 7vw, 4rem); line-height: 1.05; margin: 12px 0 14px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 auto; max-width: 520px; }
+  .rule { width: 56px; height: 1px; background: var(--accent); margin: 26px auto 0; opacity: .6; }
+
+  /* Sessions */
+  main { max-width: 880px; margin: 0 auto; padding: 16px 20px 80px; }
+  .toolbar { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .btn.small { padding: 7px 14px; font-size: .8rem; color: var(--muted); }
+  .btn.small:hover { color: var(--accent); }
+  .btn.small svg { width: 14px; height: 14px; transition: transform .3s; }
+  .session { margin-top: 28px; }
+  .session-title { margin: 0; }
+  .session-head {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 6px 0; margin: 0;
+    background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+    border-radius: 999px; -webkit-tap-highlight-color: transparent;
+  }
+  .session-head:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .session-ref {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    max-width: 0; opacity: 0; transition: opacity .25s, max-width .3s;
+  }
+  .session.collapsed .session-ref { max-width: 60vw; opacity: 1; }
+  .chev {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--muted); border: 1px solid var(--line); transition: transform .3s ease, color .15s, border-color .15s;
+  }
+  .chev svg { width: 14px; height: 14px; }
+  .session-head:hover .chev { color: var(--accent); border-color: var(--accent); }
+  .session.collapsed .chev { transform: rotate(-90deg); }
+  .session-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .35s ease; }
+  .session.collapsed .session-body { grid-template-rows: 0fr; }
+  .session-inner { overflow: hidden; min-height: 0; padding: 14px 14px 30px; margin: 0 -14px -30px; }
+  .session.collapsed .session-inner { visibility: hidden; transition: visibility 0s .35s; }
+  .session.collapsed .session-inner { padding-top: 0; }
+  .session.collapsed + .session.collapsed { margin-top: 8px; }
+  .session-num {
+    width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); font-family: var(--serif); font-weight: 600; font-size: 1.2rem;
+  }
+  .session-label { flex: none; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .session-head .line { flex: 1; height: 1px; background: var(--line); min-width: 16px; }
+
+  .verse-card {
+    position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 28px 32px 22px; box-shadow: var(--shadow); transition: transform .2s ease, box-shadow .2s ease, background-color .25s;
+  }
+  .verse-card.primary::before {
+    content: ""; position: absolute; left: 0; top: 28px; bottom: 28px; width: 3px;
+    border-radius: 0 3px 3px 0; background: var(--accent); opacity: .75;
+  }
+  @media (hover: hover) { .verse-card:hover { transform: translateY(-2px); } }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .ref { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; margin: 0; line-height: 1.2; }
+  .ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+  .text { font-family: var(--serif); font-size: 1.32rem; line-height: 1.6; margin: 0; transition: filter .3s ease, opacity .3s ease; }
+  .text sup { font-family: var(--sans); font-size: .6rem; font-weight: 600; color: var(--accent); margin-right: 3px; vertical-align: .55em; line-height: 0; }
+  .text.loading { opacity: .4; }
+  body.verse-lines .text .v { display: block; }
+  body.verse-lines .text .v + .v { margin-top: .45em; }
+  .note { font-size: .8rem; color: var(--muted); margin-top: 10px; }
+
+  .card-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+  .copy {
+    font: 500 .76rem var(--sans); color: var(--muted); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px; cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Optional verses */
+  .optional { margin-top: 18px; }
+  .optional-label { font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); margin: 0 0 10px 4px; }
+  .optional-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .optional .verse-card { background: var(--card-2); box-shadow: none; padding: 22px 24px 18px; border-radius: 16px; }
+  .optional .ref { font-size: 1.25rem; }
+  .optional .text { font-size: 1.14rem; }
+  body.hide-optional .optional { display: none; }
+
+  /* Tap a card to blur it */
+  .verse-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .verse-card.blurred .text { filter: blur(7px); opacity: .55; user-select: none; }
+  .hint { display: none; position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: .78rem; color: var(--muted); pointer-events: none; }
+  .verse-card.blurred .hint { display: block; }
+  .verse-card.blurred .card-foot { visibility: hidden; }
+
+  footer p { margin: 0 0 12px; }
+  footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 0 20px 48px; max-width: 640px; margin: 0 auto; }
+  footer a { color: inherit; }
+
+  @media (max-width: 560px) {
+    .bar { padding: 10px 14px; }
+    .verse-card { padding: 22px 22px 18px; border-radius: 16px; }
+    .text { font-size: 1.2rem; }
+    .ref { font-size: 1.4rem; }
+    .optional-grid { grid-template-columns: 1fr; }
+    .hero { padding-top: 40px; }
+    .bar .btn span { display: none; }
+    .session.collapsed .session-label { display: none; }
+    .session.collapsed .session-ref { max-width: 72vw; }
+    .panel { width: min(290px, calc(100vw - 28px)); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand">QNS</div>
+    <div class="controls">
+      <label class="select-wrap">
+        <span class="sr">Translation</span>
+        <select id="translation">
+          <optgroup label="Built in · works offline">
+            <option value="kjv">King James Version (KJV)</option>
+            <option value="bsb">Berean Standard Bible (BSB)</option>
+          </optgroup>
+          <optgroup label="Loads online">
+            <option value="darby">Darby Translation</option>
+            <option value="ylt">Young's Literal Translation (YLT)</option>
+          </optgroup>
+        </select>
+      </label>
+      <button class="btn" id="optionsBtn" aria-expanded="false" aria-controls="panel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        <span>Options</span>
+      </button>
+      <div class="panel" id="panel" role="dialog" aria-label="Display options">
+        <h3>Display</h3>
+        <label class="switch"><div>Hide optional verses</div><input type="checkbox" data-opt="hide-optional"></label>
+        <label class="switch"><div>Reverse session order<small>Newest session first</small></div><input type="checkbox" data-opt="reverse"></label>
+        <label class="switch"><div>Dark mode</div><input type="checkbox" id="darkToggle"></label>
+        <label class="switch"><div>Each verse on a new line</div><input type="checkbox" data-opt="verse-lines"></label>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">Hide God's word in your heart</div>
+  <h1>QNS Memory Verses</h1>
+  <p class="sub">Choose a translation above. Tap any verse to blur it and test yourself.</p>
+  <div class="rule"></div>
+</section>
+
+<main>
+  <div class="toolbar">
+    <button class="btn small" id="collapseAll" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5-5 5 5"/></svg>
+      <span class="lbl">Collapse all</span>
+    </button>
+  </div>
+  <div id="sessions"></div>
+</main>
+
+<footer>
+  <p>Built-in translations work offline. Others load from
+  <a href="https://bible-api.com" target="_blank" rel="noopener">bible-api.com</a>.
+  The KJV, BSB and online translations are in the public domain.</p>
+  <div id="licensed-notices"></div>
+</footer>
+
+<!-- Filled in by the GitHub Action at deploy time (scripts/fetch-licensed.mjs). Leave as null here. -->
+<script id="licensed-data" type="application/json">null</script>
+
+<script>
+  // [verse, text] pairs per translation. Generated from eBible.org.
+  const SESSIONS = [
+ {
+  "n": 1,
+  "main": {
+   "ref": "Matthew 11:28–30",
+   "q": "matthew 11:28-30",
+   "kjv": [
+    [
+     28,
+     "Come unto me, all ye that labour and are heavy laden, and I will give you rest."
+    ],
+    [
+     29,
+     "Take my yoke upon you, and learn of me; for I am meek and lowly in heart: and ye shall find rest unto your souls."
+    ],
+    [
+     30,
+     "For my yoke is easy, and my burden is light."
+    ]
+   ],
+   "bsb": [
+    [
+     28,
+     "Come to Me, all you who are weary and burdened, and I will give you rest."
+    ],
+    [
+     29,
+     "Take My yoke upon you and learn from Me; for I am gentle and humble in heart, and you will find rest for your souls."
+    ],
+    [
+     30,
+     "For My yoke is easy and My burden is light."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Isaiah 55:1–2",
+    "q": "isaiah 55:1-2",
+    "kjv": [
+     [
+      1,
+      "Ho, every one that thirsteth, come ye to the waters, and he that hath no money; come ye, buy, and eat; yea, come, buy wine and milk without money and without price."
+     ],
+     [
+      2,
+      "Wherefore do ye spend money for that which is not bread? and your labour for that which satisfieth not? hearken diligently unto me, and eat ye that which is good, and let your soul delight itself in fatness."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "Come, all you who are thirsty, come to the waters; and you without money, come, buy, and eat! Come, buy wine and milk without money and without cost!"
+     ],
+     [
+      2,
+      "Why spend money on that which is not bread, and your labor on that which does not satisfy? Listen carefully to Me, and eat what is good, and your soul will delight in the richest of foods."
+     ]
+    ]
+   },
+   {
+    "ref": "Proverbs 3:1–2",
+    "q": "proverbs 3:1-2",
+    "kjv": [
+     [
+      1,
+      "My son, forget not my law; but let thine heart keep my commandments:"
+     ],
+     [
+      2,
+      "For length of days, and long life, and peace, shall they add to thee."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "My son, do not forget my teaching, but let your heart keep my commandments;"
+     ],
+     [
+      2,
+      "for they will add length to your days, years and peace to your life."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 2,
+  "main": {
+   "ref": "2 Peter 1:1–3",
+   "q": "2 peter 1:1-3",
+   "kjv": [
+    [
+     1,
+     "Simon Peter, a servant and an apostle of Jesus Christ, to them that have obtained like precious faith with us through the righteousness of God and our Saviour Jesus Christ:"
+    ],
+    [
+     2,
+     "Grace and peace be multiplied unto you through the knowledge of God, and of Jesus our Lord,"
+    ],
+    [
+     3,
+     "According as his divine power hath given unto us all things that pertain unto life and godliness, through the knowledge of him that hath called us to glory and virtue:"
+    ]
+   ],
+   "bsb": [
+    [
+     1,
+     "Simon Peter, a servant and apostle of Jesus Christ, To those who through the righteousness of our God and Savior Jesus Christ have received a faith as precious as ours:"
+    ],
+    [
+     2,
+     "Grace and peace be multiplied to you through the knowledge of God and of Jesus our Lord."
+    ],
+    [
+     3,
+     "His divine power has given us everything we need for life and godliness through the knowledge of Him who called us by His own glory and excellence."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "John 8:31–32",
+    "q": "john 8:31-32",
+    "kjv": [
+     [
+      31,
+      "Then said Jesus to those Jews which believed on him, If ye continue in my word, then are ye my disciples indeed;"
+     ],
+     [
+      32,
+      "And ye shall know the truth, and the truth shall make you free."
+     ]
+    ],
+    "bsb": [
+     [
+      31,
+      "So He said to the Jews who had believed Him, “If you continue in My word, you are truly My disciples."
+     ],
+     [
+      32,
+      "Then you will know the truth, and the truth will set you free.”"
+     ]
+    ]
+   },
+   {
+    "ref": "John 17:14–17",
+    "q": "john 17:14-17",
+    "kjv": [
+     [
+      14,
+      "I have given them thy word; and the world hath hated them, because they are not of the world, even as I am not of the world."
+     ],
+     [
+      15,
+      "I pray not that thou shouldest take them out of the world, but that thou shouldest keep them from the evil."
+     ],
+     [
+      16,
+      "They are not of the world, even as I am not of the world."
+     ],
+     [
+      17,
+      "Sanctify them through thy truth: thy word is truth."
+     ]
+    ],
+    "bsb": [
+     [
+      14,
+      "I have given them Your word and the world has hated them; for they are not of the world, just as I am not of the world."
+     ],
+     [
+      15,
+      "I am not asking that You take them out of the world, but that You keep them from the evil one."
+     ],
+     [
+      16,
+      "They are not of the world, just as I am not of the world."
+     ],
+     [
+      17,
+      "Sanctify them by the truth; Your word is truth."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 3,
+  "main": {
+   "ref": "2 Corinthians 4:16–18",
+   "q": "2 corinthians 4:16-18",
+   "kjv": [
+    [
+     16,
+     "For which cause we faint not; but though our outward man perish, yet the inward man is renewed day by day."
+    ],
+    [
+     17,
+     "For our light affliction, which is but for a moment, worketh for us a far more exceeding and eternal weight of glory;"
+    ],
+    [
+     18,
+     "While we look not at the things which are seen, but at the things which are not seen: for the things which are seen are temporal; but the things which are not seen are eternal."
+    ]
+   ],
+   "bsb": [
+    [
+     16,
+     "Therefore we do not lose heart. Though our outer self is wasting away, yet our inner self is being renewed day by day."
+    ],
+    [
+     17,
+     "For our light and momentary affliction is producing for us an eternal glory that is far beyond comparison."
+    ],
+    [
+     18,
+     "So we fix our eyes not on what is seen, but on what is unseen. For what is seen is temporary, but what is unseen is eternal."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "2 Corinthians 3:5",
+    "q": "2 corinthians 3:5",
+    "kjv": [
+     [
+      5,
+      "Not that we are sufficient of ourselves to think any thing as of ourselves; but our sufficiency is of God;"
+     ]
+    ],
+    "bsb": [
+     [
+      5,
+      "Not that we are competent in ourselves to claim that anything comes from us, but our competence comes from God."
+     ]
+    ]
+   },
+   {
+    "ref": "2 Corinthians 4:7",
+    "q": "2 corinthians 4:7",
+    "kjv": [
+     [
+      7,
+      "But we have this treasure in earthen vessels, that the excellency of the power may be of God, and not of us."
+     ]
+    ],
+    "bsb": [
+     [
+      7,
+      "Now we have this treasure in jars of clay to show that this surpassingly great power is from God and not from us."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 4,
+  "main": {
+   "ref": "Romans 1:21",
+   "q": "romans 1:21",
+   "kjv": [
+    [
+     21,
+     "Because that, when they knew God, they glorified him not as God, neither were thankful; but became vain in their imaginations, and their foolish heart was darkened."
+    ]
+   ],
+   "bsb": [
+    [
+     21,
+     "For although they knew God, they neither glorified Him as God nor gave thanks to Him, but they became futile in their thinking and darkened in their foolish hearts."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Jeremiah 2:13",
+    "q": "jeremiah 2:13",
+    "kjv": [
+     [
+      13,
+      "For my people have committed two evils; they have forsaken me the fountain of living waters, and hewed them out cisterns, broken cisterns, that can hold no water."
+     ]
+    ],
+    "bsb": [
+     [
+      13,
+      "For My people have committed two evils: They have forsaken Me, the fountain of living water, and they have dug their own cisterns—broken cisterns that cannot hold water."
+     ]
+    ]
+   },
+   {
+    "ref": "Ephesians 4:17–19",
+    "q": "ephesians 4:17-19",
+    "kjv": [
+     [
+      17,
+      "This I say therefore, and testify in the Lord, that ye henceforth walk not as other Gentiles walk, in the vanity of their mind,"
+     ],
+     [
+      18,
+      "Having the understanding darkened, being alienated from the life of God through the ignorance that is in them, because of the blindness of their heart:"
+     ],
+     [
+      19,
+      "Who being past feeling have given themselves over unto lasciviousness, to work all uncleanness with greediness."
+     ]
+    ],
+    "bsb": [
+     [
+      17,
+      "So I tell you this, and insist on it in the Lord, that you must no longer walk as the Gentiles do, in the futility of their thinking."
+     ],
+     [
+      18,
+      "They are darkened in their understanding and alienated from the life of God because of the ignorance that is in them due to the hardness of their hearts."
+     ],
+     [
+      19,
+      "Having lost all sense of shame, they have given themselves over to sensuality for the practice of every kind of impurity, with a craving for more."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 5,
+  "main": {
+   "ref": "John 7:37–38",
+   "q": "john 7:37-38",
+   "kjv": [
+    [
+     37,
+     "In the last day, that great day of the feast, Jesus stood and cried, saying, If any man thirst, let him come unto me, and drink."
+    ],
+    [
+     38,
+     "He that believeth on me, as the scripture hath said, out of his belly shall flow rivers of living water."
+    ]
+   ],
+   "bsb": [
+    [
+     37,
+     "On the last and greatest day of the feast, Jesus stood up and called out in a loud voice, “If anyone is thirsty, let him come to Me and drink."
+    ],
+    [
+     38,
+     "Whoever believes in Me, as the Scripture has said: ‘Streams of living water will flow from within him.’ ”"
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "John 4:13–14",
+    "q": "john 4:13-14",
+    "kjv": [
+     [
+      13,
+      "Jesus answered and said unto her, Whosoever drinketh of this water shall thirst again:"
+     ],
+     [
+      14,
+      "But whosoever drinketh of the water that I shall give him shall never thirst; but the water that I shall give him shall be in him a well of water springing up into everlasting life."
+     ]
+    ],
+    "bsb": [
+     [
+      13,
+      "Jesus said to her, “Everyone who drinks this water will be thirsty again."
+     ],
+     [
+      14,
+      "But whoever drinks the water I give him will never thirst. Indeed, the water I give him will become in him a fount of water springing up to eternal life.”"
+     ]
+    ]
+   },
+   {
+    "ref": "Proverbs 3:3–8",
+    "q": "proverbs 3:3-8",
+    "kjv": [
+     [
+      3,
+      "Let not mercy and truth forsake thee: bind them about thy neck; write them upon the table of thine heart:"
+     ],
+     [
+      4,
+      "So shalt thou find favour and good understanding in the sight of God and man."
+     ],
+     [
+      5,
+      "Trust in the LORD with all thine heart; and lean not unto thine own understanding."
+     ],
+     [
+      6,
+      "In all thy ways acknowledge him, and he shall direct thy paths."
+     ],
+     [
+      7,
+      "Be not wise in thine own eyes: fear the LORD, and depart from evil."
+     ],
+     [
+      8,
+      "It shall be health to thy navel, and marrow to thy bones."
+     ]
+    ],
+    "bsb": [
+     [
+      3,
+      "Never let loving devotion or faithfulness leave you; bind them around your neck, write them on the tablet of your heart."
+     ],
+     [
+      4,
+      "Then you will find favor and high regard in the sight of God and man."
+     ],
+     [
+      5,
+      "Trust in the LORD with all your heart, and lean not on your own understanding;"
+     ],
+     [
+      6,
+      "in all your ways acknowledge Him, and He will make your paths straight."
+     ],
+     [
+      7,
+      "Be not wise in your own eyes; fear the LORD and turn away from evil."
+     ],
+     [
+      8,
+      "This will bring healing to your body and refreshment to your bones."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 6,
+  "main": {
+   "ref": "Philippians 4:11–13",
+   "q": "philippians 4:11-13",
+   "kjv": [
+    [
+     11,
+     "Not that I speak in respect of want: for I have learned, in whatsoever state I am, therewith to be content."
+    ],
+    [
+     12,
+     "I know both how to be abased, and I know how to abound: every where and in all things I am instructed both to be full and to be hungry, both to abound and to suffer need."
+    ],
+    [
+     13,
+     "I can do all things through Christ which strengtheneth me."
+    ]
+   ],
+   "bsb": [
+    [
+     11,
+     "I am not saying this out of need, for I have learned to be content regardless of my circumstances."
+    ],
+    [
+     12,
+     "I know how to live humbly, and I know how to abound. I am accustomed to any and every situation—to being filled and being hungry, to having plenty and having need."
+    ],
+    [
+     13,
+     "I can do all things through Christ who gives me strength."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "1 Timothy 6:6–12",
+    "q": "1 timothy 6:6-12",
+    "kjv": [
+     [
+      6,
+      "But godliness with contentment is great gain."
+     ],
+     [
+      7,
+      "For we brought nothing into this world, and it is certain we can carry nothing out."
+     ],
+     [
+      8,
+      "And having food and raiment let us be therewith content."
+     ],
+     [
+      9,
+      "But they that will be rich fall into temptation and a snare, and into many foolish and hurtful lusts, which drown men in destruction and perdition."
+     ],
+     [
+      10,
+      "For the love of money is the root of all evil: which while some coveted after, they have erred from the faith, and pierced themselves through with many sorrows."
+     ],
+     [
+      11,
+      "But thou, O man of God, flee these things; and follow after righteousness, godliness, faith, love, patience, meekness."
+     ],
+     [
+      12,
+      "Fight the good fight of faith, lay hold on eternal life, whereunto thou art also called, and hast professed a good profession before many witnesses."
+     ]
+    ],
+    "bsb": [
+     [
+      6,
+      "Of course, godliness with contentment is great gain."
+     ],
+     [
+      7,
+      "For we brought nothing into the world, so we cannot carry anything out of it."
+     ],
+     [
+      8,
+      "But if we have food and clothing, we will be content with these."
+     ],
+     [
+      9,
+      "Those who want to be rich, however, fall into temptation and become ensnared by many foolish and harmful desires that plunge them into ruin and destruction."
+     ],
+     [
+      10,
+      "For the love of money is the root of all kinds of evil. By craving it, some have wandered away from the faith and pierced themselves with many sorrows."
+     ],
+     [
+      11,
+      "But you, O man of God, flee from these things and pursue righteousness, godliness, faith, love, perseverance, and gentleness."
+     ],
+     [
+      12,
+      "Fight the good fight of the faith. Take hold of the eternal life to which you were called when you made the good confession before many witnesses."
+     ]
+    ]
+   },
+   {
+    "ref": "Hebrews 13:5–6",
+    "q": "hebrews 13:5-6",
+    "kjv": [
+     [
+      5,
+      "Let your conversation be without covetousness; and be content with such things as ye have: for he hath said, I will never leave thee, nor forsake thee."
+     ],
+     [
+      6,
+      "So that we may boldly say, The Lord is my helper, and I will not fear what man shall do unto me."
+     ]
+    ],
+    "bsb": [
+     [
+      5,
+      "Keep your lives free from the love of money and be content with what you have, for God has said: “Never will I leave you, never will I forsake you.”"
+     ],
+     [
+      6,
+      "So we say with confidence: “The Lord is my helper; I will not be afraid. What can man do to me?”"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 7,
+  "main": {
+   "ref": "Romans 8:31–32, 37",
+   "q": "romans 8:31-32,37",
+   "kjv": [
+    [
+     31,
+     "What shall we then say to these things? If God be for us, who can be against us?"
+    ],
+    [
+     32,
+     "He that spared not his own Son, but delivered him up for us all, how shall he not with him also freely give us all things?"
+    ],
+    [
+     37,
+     "Nay, in all these things we are more than conquerors through him that loved us."
+    ]
+   ],
+   "bsb": [
+    [
+     31,
+     "What then shall we say in response to these things? If God is for us, who can be against us?"
+    ],
+    [
+     32,
+     "He who did not spare His own Son but gave Him up for us all, how will He not also, along with Him, freely give us all things?"
+    ],
+    [
+     37,
+     "No, in all these things we are more than conquerors through Him who loved us."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Romans 8:31–39",
+    "q": "romans 8:31-39",
+    "kjv": [
+     [
+      31,
+      "What shall we then say to these things? If God be for us, who can be against us?"
+     ],
+     [
+      32,
+      "He that spared not his own Son, but delivered him up for us all, how shall he not with him also freely give us all things?"
+     ],
+     [
+      33,
+      "Who shall lay any thing to the charge of God’s elect? It is God that justifieth."
+     ],
+     [
+      34,
+      "Who is he that condemneth? It is Christ that died, yea rather, that is risen again, who is even at the right hand of God, who also maketh intercession for us."
+     ],
+     [
+      35,
+      "Who shall separate us from the love of Christ? shall tribulation, or distress, or persecution, or famine, or nakedness, or peril, or sword?"
+     ],
+     [
+      36,
+      "As it is written, For thy sake we are killed all the day long; we are accounted as sheep for the slaughter."
+     ],
+     [
+      37,
+      "Nay, in all these things we are more than conquerors through him that loved us."
+     ],
+     [
+      38,
+      "For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come,"
+     ],
+     [
+      39,
+      "Nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord."
+     ]
+    ],
+    "bsb": [
+     [
+      31,
+      "What then shall we say in response to these things? If God is for us, who can be against us?"
+     ],
+     [
+      32,
+      "He who did not spare His own Son but gave Him up for us all, how will He not also, along with Him, freely give us all things?"
+     ],
+     [
+      33,
+      "Who will bring any charge against God’s elect? It is God who justifies."
+     ],
+     [
+      34,
+      "Who is there to condemn us? For Christ Jesus, who died, and more than that was raised to life, is at the right hand of God—and He is interceding for us."
+     ],
+     [
+      35,
+      "Who shall separate us from the love of Christ? Shall trouble or distress or persecution or famine or nakedness or danger or sword?"
+     ],
+     [
+      36,
+      "As it is written: “For Your sake we face death all day long; we are considered as sheep to be slaughtered.”"
+     ],
+     [
+      37,
+      "No, in all these things we are more than conquerors through Him who loved us."
+     ],
+     [
+      38,
+      "For I am convinced that neither death nor life, neither angels nor principalities, neither the present nor the future, nor any powers,"
+     ],
+     [
+      39,
+      "neither height nor depth, nor anything else in all creation, will be able to separate us from the love of God that is in Christ Jesus our Lord."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 8,
+  "main": {
+   "ref": "Ephesians 2:4–5",
+   "q": "ephesians 2:4-5",
+   "kjv": [
+    [
+     4,
+     "But God, who is rich in mercy, for his great love wherewith he loved us,"
+    ],
+    [
+     5,
+     "Even when we were dead in sins, hath quickened us together with Christ, (by grace ye are saved;)"
+    ]
+   ],
+   "bsb": [
+    [
+     4,
+     "But because of His great love for us, God, who is rich in mercy,"
+    ],
+    [
+     5,
+     "made us alive with Christ even when we were dead in our trespasses. It is by grace you have been saved!"
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Jeremiah 29:11",
+    "q": "jeremiah 29:11",
+    "kjv": [
+     [
+      11,
+      "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end."
+     ]
+    ],
+    "bsb": [
+     [
+      11,
+      "For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you, to give you a future and a hope."
+     ]
+    ]
+   },
+   {
+    "ref": "Psalm 103:10–14",
+    "q": "psalms 103:10-14",
+    "kjv": [
+     [
+      10,
+      "He hath not dealt with us after our sins; nor rewarded us according to our iniquities."
+     ],
+     [
+      11,
+      "For as the heaven is high above the earth, so great is his mercy toward them that fear him."
+     ],
+     [
+      12,
+      "As far as the east is from the west, so far hath he removed our transgressions from us."
+     ],
+     [
+      13,
+      "Like as a father pitieth his children, so the LORD pitieth them that fear him."
+     ],
+     [
+      14,
+      "For he knoweth our frame; he remembereth that we are dust."
+     ]
+    ],
+    "bsb": [
+     [
+      10,
+      "He has not dealt with us according to our sins or repaid us according to our iniquities."
+     ],
+     [
+      11,
+      "For as high as the heavens are above the earth, so great is His loving devotion for those who fear Him."
+     ],
+     [
+      12,
+      "As far as the east is from the west, so far has He removed our transgressions from us."
+     ],
+     [
+      13,
+      "As a father has compassion on his children, so the LORD has compassion on those who fear Him."
+     ],
+     [
+      14,
+      "For He knows our frame; He is mindful that we are dust."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 9,
+  "main": {
+   "ref": "Lamentations 3:21–26",
+   "q": "lamentations 3:21-26",
+   "kjv": [
+    [
+     21,
+     "This I recall to my mind, therefore have I hope."
+    ],
+    [
+     22,
+     "It is of the LORD’s mercies that we are not consumed, because his compassions fail not."
+    ],
+    [
+     23,
+     "They are new every morning: great is thy faithfulness."
+    ],
+    [
+     24,
+     "The LORD is my portion, saith my soul; therefore will I hope in him."
+    ],
+    [
+     25,
+     "The LORD is good unto them that wait for him, to the soul that seeketh him."
+    ],
+    [
+     26,
+     "It is good that a man should both hope and quietly wait for the salvation of the LORD."
+    ]
+   ],
+   "bsb": [
+    [
+     21,
+     "Yet I call this to mind, and therefore I have hope:"
+    ],
+    [
+     22,
+     "Because of the loving devotion of the LORD we are not consumed, for His mercies never fail."
+    ],
+    [
+     23,
+     "They are new every morning; great is Your faithfulness!"
+    ],
+    [
+     24,
+     "“The LORD is my portion,” says my soul, “therefore I will hope in Him.”"
+    ],
+    [
+     25,
+     "The LORD is good to those who wait for Him, to the soul who seeks Him."
+    ],
+    [
+     26,
+     "It is good to wait quietly for the salvation of the LORD."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Psalm 102:25–27",
+    "q": "psalms 102:25-27",
+    "kjv": [
+     [
+      25,
+      "Of old hast thou laid the foundation of the earth: and the heavens are the work of thy hands."
+     ],
+     [
+      26,
+      "They shall perish, but thou shalt endure: yea, all of them shall wax old like a garment; as a vesture shalt thou change them, and they shall be changed:"
+     ],
+     [
+      27,
+      "But thou art the same, and thy years shall have no end."
+     ]
+    ],
+    "bsb": [
+     [
+      25,
+      "In the beginning You laid the foundations of the earth, and the heavens are the work of Your hands."
+     ],
+     [
+      26,
+      "They will perish, but You remain; they will all wear out like a garment. Like clothing You will change them, and they will be passed on."
+     ],
+     [
+      27,
+      "But You remain the same, and Your years will never end."
+     ]
+    ]
+   },
+   {
+    "ref": "Numbers 23:19",
+    "q": "numbers 23:19",
+    "kjv": [
+     [
+      19,
+      "God is not a man, that he should lie; neither the son of man, that he should repent: hath he said, and shall he not do it? or hath he spoken, and shall he not make it good?"
+     ]
+    ],
+    "bsb": [
+     [
+      19,
+      "God is not a man, that He should lie, or a son of man, that He should change His mind. Does He speak and not act? Does He promise and not fulfill?"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 10,
+  "main": {
+   "ref": "1 Chronicles 29:11–13",
+   "q": "1 chronicles 29:11-13",
+   "kjv": [
+    [
+     11,
+     "Thine, O LORD, is the greatness, and the power, and the glory, and the victory, and the majesty: for all that is in the heaven and in the earth is thine; thine is the kingdom, O LORD, and thou art exalted as head above all."
+    ],
+    [
+     12,
+     "Both riches and honour come of thee, and thou reignest over all; and in thine hand is power and might; and in thine hand it is to make great, and to give strength unto all."
+    ],
+    [
+     13,
+     "Now therefore, our God, we thank thee, and praise thy glorious name."
+    ]
+   ],
+   "bsb": [
+    [
+     11,
+     "Yours, O LORD, is the greatness and the power and the glory and the splendor and the majesty, for everything in heaven and on earth belongs to You. Yours, O LORD, is the kingdom, and You are exalted as head over all."
+    ],
+    [
+     12,
+     "Both riches and honor come from You, and You are the ruler over all. In Your hands are power and might to exalt and give strength to all."
+    ],
+    [
+     13,
+     "Now therefore, our God, we give You thanks, and we praise Your glorious name."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Romans 4:20–21",
+    "q": "romans 4:20-21",
+    "kjv": [
+     [
+      20,
+      "He staggered not at the promise of God through unbelief; but was strong in faith, giving glory to God;"
+     ],
+     [
+      21,
+      "And being fully persuaded that, what he had promised, he was able also to perform."
+     ]
+    ],
+    "bsb": [
+     [
+      20,
+      "Yet he did not waver through disbelief in the promise of God, but was strengthened in his faith and gave glory to God,"
+     ],
+     [
+      21,
+      "being fully persuaded that God was able to do what He had promised."
+     ]
+    ]
+   },
+   {
+    "ref": "Isaiah 40:26",
+    "q": "isaiah 40:26",
+    "kjv": [
+     [
+      26,
+      "Lift up your eyes on high, and behold who hath created these things, that bringeth out their host by number: he calleth them all by names by the greatness of his might, for that he is strong in power; not one faileth."
+     ]
+    ],
+    "bsb": [
+     [
+      26,
+      "Lift up your eyes on high: Who created all these? He leads forth the starry host by number; He calls each one by name. Because of His great power and mighty strength, not one of them is missing."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 11,
+  "main": {
+   "ref": "Romans 11:33",
+   "q": "romans 11:33",
+   "kjv": [
+    [
+     33,
+     "O the depth of the riches both of the wisdom and knowledge of God! how unsearchable are his judgments, and his ways past finding out!"
+    ]
+   ],
+   "bsb": [
+    [
+     33,
+     "O, the depth of the riches of the wisdom and knowledge of God! How unsearchable are His judgments, and untraceable His ways!"
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Proverbs 2:1–7",
+    "q": "proverbs 2:1-7",
+    "kjv": [
+     [
+      1,
+      "My son, if thou wilt receive my words, and hide my commandments with thee;"
+     ],
+     [
+      2,
+      "So that thou incline thine ear unto wisdom, and apply thine heart to understanding;"
+     ],
+     [
+      3,
+      "Yea, if thou criest after knowledge, and liftest up thy voice for understanding;"
+     ],
+     [
+      4,
+      "If thou seekest her as silver, and searchest for her as for hid treasures;"
+     ],
+     [
+      5,
+      "Then shalt thou understand the fear of the LORD, and find the knowledge of God."
+     ],
+     [
+      6,
+      "For the LORD giveth wisdom: out of his mouth cometh knowledge and understanding."
+     ],
+     [
+      7,
+      "He layeth up sound wisdom for the righteous: he is a buckler to them that walk uprightly."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "My son, if you accept my words and hide my commandments within you,"
+     ],
+     [
+      2,
+      "if you incline your ear to wisdom and direct your heart to understanding,"
+     ],
+     [
+      3,
+      "if you truly call out to insight and lift your voice to understanding,"
+     ],
+     [
+      4,
+      "if you seek it like silver and search it out like hidden treasure,"
+     ],
+     [
+      5,
+      "then you will discern the fear of the LORD and discover the knowledge of God."
+     ],
+     [
+      6,
+      "For the LORD gives wisdom; from His mouth come knowledge and understanding."
+     ],
+     [
+      7,
+      "He stores up sound wisdom for the upright; He is a shield to those who walk with integrity,"
+     ]
+    ]
+   },
+   {
+    "ref": "Psalm 139:1–6",
+    "q": "psalms 139:1-6",
+    "kjv": [
+     [
+      1,
+      "O LORD, thou hast searched me, and known me."
+     ],
+     [
+      2,
+      "Thou knowest my downsitting and mine uprising, thou understandest my thought afar off."
+     ],
+     [
+      3,
+      "Thou compassest my path and my lying down, and art acquainted with all my ways."
+     ],
+     [
+      4,
+      "For there is not a word in my tongue, but, lo, O LORD, thou knowest it altogether."
+     ],
+     [
+      5,
+      "Thou hast beset me behind and before, and laid thine hand upon me."
+     ],
+     [
+      6,
+      "Such knowledge is too wonderful for me; it is high, I cannot attain unto it."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "O LORD, You have searched me and known me."
+     ],
+     [
+      2,
+      "You know when I sit and when I rise; You understand my thoughts from afar."
+     ],
+     [
+      3,
+      "You search out my path and my lying down; You are aware of all my ways."
+     ],
+     [
+      4,
+      "Even before a word is on my tongue, You know all about it, O LORD."
+     ],
+     [
+      5,
+      "You hem me in behind and before; You have laid Your hand upon me."
+     ],
+     [
+      6,
+      "Such knowledge is too wonderful for me, too lofty for me to attain."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 12,
+  "main": {
+   "ref": "Psalm 38:2–4",
+   "q": "psalms 38:2-4",
+   "kjv": [
+    [
+     2,
+     "For thine arrows stick fast in me, and thy hand presseth me sore."
+    ],
+    [
+     3,
+     "There is no soundness in my flesh because of thine anger; neither is there any rest in my bones because of my sin."
+    ],
+    [
+     4,
+     "For mine iniquities are gone over mine head: as an heavy burden they are too heavy for me."
+    ]
+   ],
+   "bsb": [
+    [
+     2,
+     "For Your arrows have pierced me deeply, and Your hand has pressed down on me."
+    ],
+    [
+     3,
+     "There is no soundness in my body because of Your anger; there is no rest in my bones because of my sin."
+    ],
+    [
+     4,
+     "For my iniquities have overwhelmed me; they are a burden too heavy to bear."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Proverbs 20:27",
+    "q": "proverbs 20:27",
+    "kjv": [
+     [
+      27,
+      "The spirit of man is the candle of the LORD, searching all the inward parts of the belly."
+     ]
+    ],
+    "bsb": [
+     [
+      27,
+      "The spirit of a man is the lamp of the LORD, searching out his inmost being."
+     ]
+    ]
+   },
+   {
+    "ref": "Acts 24:16",
+    "q": "acts 24:16",
+    "kjv": [
+     [
+      16,
+      "And herein do I exercise myself, to have always a conscience void of offence toward God, and toward men."
+     ]
+    ],
+    "bsb": [
+     [
+      16,
+      "In this hope, I strive always to maintain a clear conscience before God and man."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 13,
+  "main": {
+   "ref": "Psalm 51:1–4, 7",
+   "q": "psalms 51:1-4,7",
+   "kjv": [
+    [
+     1,
+     "Have mercy upon me, O God, according to thy lovingkindness: according unto the multitude of thy tender mercies blot out my transgressions."
+    ],
+    [
+     2,
+     "Wash me throughly from mine iniquity, and cleanse me from my sin."
+    ],
+    [
+     3,
+     "For I acknowledge my transgressions: and my sin is ever before me."
+    ],
+    [
+     4,
+     "Against thee, thee only, have I sinned, and done this evil in thy sight: that thou mightest be justified when thou speakest, and be clear when thou judgest."
+    ],
+    [
+     7,
+     "Purge me with hyssop, and I shall be clean: wash me, and I shall be whiter than snow."
+    ]
+   ],
+   "bsb": [
+    [
+     1,
+     "Have mercy on me, O God, according to Your loving devotion; according to Your great compassion, blot out my transgressions."
+    ],
+    [
+     2,
+     "Wash me clean of my iniquity and cleanse me from my sin."
+    ],
+    [
+     3,
+     "For I know my transgressions, and my sin is always before me."
+    ],
+    [
+     4,
+     "Against You, You only, have I sinned and done what is evil in Your sight, so that You may be proved right when You speak and blameless when You judge."
+    ],
+    [
+     7,
+     "Purify me with hyssop, and I will be clean; wash me, and I will be whiter than snow."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Psalm 102:25–27",
+    "q": "psalms 102:25-27",
+    "kjv": [
+     [
+      25,
+      "Of old hast thou laid the foundation of the earth: and the heavens are the work of thy hands."
+     ],
+     [
+      26,
+      "They shall perish, but thou shalt endure: yea, all of them shall wax old like a garment; as a vesture shalt thou change them, and they shall be changed:"
+     ],
+     [
+      27,
+      "But thou art the same, and thy years shall have no end."
+     ]
+    ],
+    "bsb": [
+     [
+      25,
+      "In the beginning You laid the foundations of the earth, and the heavens are the work of Your hands."
+     ],
+     [
+      26,
+      "They will perish, but You remain; they will all wear out like a garment. Like clothing You will change them, and they will be passed on."
+     ],
+     [
+      27,
+      "But You remain the same, and Your years will never end."
+     ]
+    ]
+   },
+   {
+    "ref": "Numbers 23:19",
+    "q": "numbers 23:19",
+    "kjv": [
+     [
+      19,
+      "God is not a man, that he should lie; neither the son of man, that he should repent: hath he said, and shall he not do it? or hath he spoken, and shall he not make it good?"
+     ]
+    ],
+    "bsb": [
+     [
+      19,
+      "God is not a man, that He should lie, or a son of man, that He should change His mind. Does He speak and not act? Does He promise and not fulfill?"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 14,
+  "main": {
+   "ref": "John 13:34–35",
+   "q": "john 13:34-35",
+   "kjv": [
+    [
+     34,
+     "A new commandment I give unto you, That ye love one another; as I have loved you, that ye also love one another."
+    ],
+    [
+     35,
+     "By this shall all men know that ye are my disciples, if ye have love one to another."
+    ]
+   ],
+   "bsb": [
+    [
+     34,
+     "A new commandment I give you: Love one another. As I have loved you, so you also must love one another."
+    ],
+    [
+     35,
+     "By this everyone will know that you are My disciples, if you love one another."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Matthew 5:23–24",
+    "q": "matthew 5:23-24",
+    "kjv": [
+     [
+      23,
+      "Therefore if thou bring thy gift to the altar, and there rememberest that thy brother hath ought against thee;"
+     ],
+     [
+      24,
+      "Leave there thy gift before the altar, and go thy way; first be reconciled to thy brother, and then come and offer thy gift."
+     ]
+    ],
+    "bsb": [
+     [
+      23,
+      "So if you are offering your gift at the altar and there remember that your brother has something against you,"
+     ],
+     [
+      24,
+      "leave your gift there before the altar. First go and be reconciled to your brother; then come and offer your gift."
+     ]
+    ]
+   },
+   {
+    "ref": "Matthew 18:15–21",
+    "q": "matthew 18:15-21",
+    "kjv": [
+     [
+      15,
+      "Moreover if thy brother shall trespass against thee, go and tell him his fault between thee and him alone: if he shall hear thee, thou hast gained thy brother."
+     ],
+     [
+      16,
+      "But if he will not hear thee, then take with thee one or two more, that in the mouth of two or three witnesses every word may be established."
+     ],
+     [
+      17,
+      "And if he shall neglect to hear them, tell it unto the church: but if he neglect to hear the church, let him be unto thee as an heathen man and a publican."
+     ],
+     [
+      18,
+      "Verily I say unto you, Whatsoever ye shall bind on earth shall be bound in heaven: and whatsoever ye shall loose on earth shall be loosed in heaven."
+     ],
+     [
+      19,
+      "Again I say unto you, That if two of you shall agree on earth as touching any thing that they shall ask, it shall be done for them of my Father which is in heaven."
+     ],
+     [
+      20,
+      "For where two or three are gathered together in my name, there am I in the midst of them."
+     ],
+     [
+      21,
+      "Then came Peter to him, and said, Lord, how oft shall my brother sin against me, and I forgive him? till seven times?"
+     ]
+    ],
+    "bsb": [
+     [
+      15,
+      "If your brother sins against you, go and confront him privately. If he listens to you, you have won your brother over."
+     ],
+     [
+      16,
+      "But if he will not listen, take one or two others along, so that ‘every matter may be established by the testimony of two or three witnesses.’"
+     ],
+     [
+      17,
+      "If he refuses to listen to them, tell it to the church. And if he refuses to listen even to the church, regard him as you would a pagan or a tax collector."
+     ],
+     [
+      18,
+      "Truly I tell you, whatever you bind on earth will be bound in heaven, and whatever you loose on earth will be loosed in heaven."
+     ],
+     [
+      19,
+      "Again, I tell you truly that if two of you on the earth agree about anything you ask for, it will be done for you by My Father in heaven."
+     ],
+     [
+      20,
+      "For where two or three gather together in My name, there am I with them."
+     ],
+     [
+      21,
+      "Then Peter came to Jesus and asked, “Lord, how many times shall I forgive my brother who sins against me? Up to seven times?”"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 15,
+  "main": {
+   "ref": "Ephesians 4:31–32",
+   "q": "ephesians 4:31-32",
+   "kjv": [
+    [
+     31,
+     "Let all bitterness, and wrath, and anger, and clamour, and evil speaking, be put away from you, with all malice:"
+    ],
+    [
+     32,
+     "And be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ’s sake hath forgiven you."
+    ]
+   ],
+   "bsb": [
+    [
+     31,
+     "Get rid of all bitterness, rage and anger, outcry and slander, along with every form of malice."
+    ],
+    [
+     32,
+     "Be kind and tenderhearted to one another, forgiving each other just as in Christ God forgave you."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Mark 11:25–26",
+    "q": "mark 11:25-26",
+    "kjv": [
+     [
+      25,
+      "And when ye stand praying, forgive, if ye have ought against any: that your Father also which is in heaven may forgive you your trespasses."
+     ],
+     [
+      26,
+      "But if ye do not forgive, neither will your Father which is in heaven forgive your trespasses."
+     ]
+    ],
+    "bsb": [
+     [
+      25,
+      "And when you stand to pray, if you hold anything against another, forgive it, so that your Father in heaven will forgive your trespasses as well."
+     ],
+     [
+      26,
+      "[But if you do not forgive, neither will your Father in heaven forgive your trespasses.]"
+     ]
+    ]
+   },
+   {
+    "ref": "Romans 12:17–21",
+    "q": "romans 12:17-21",
+    "kjv": [
+     [
+      17,
+      "Recompense to no man evil for evil. Provide things honest in the sight of all men."
+     ],
+     [
+      18,
+      "If it be possible, as much as lieth in you, live peaceably with all men."
+     ],
+     [
+      19,
+      "Dearly beloved, avenge not yourselves, but rather give place unto wrath: for it is written, Vengeance is mine; I will repay, saith the Lord."
+     ],
+     [
+      20,
+      "Therefore if thine enemy hunger, feed him; if he thirst, give him drink: for in so doing thou shalt heap coals of fire on his head."
+     ],
+     [
+      21,
+      "Be not overcome of evil, but overcome evil with good."
+     ]
+    ],
+    "bsb": [
+     [
+      17,
+      "Do not repay anyone evil for evil. Carefully consider what is right in the eyes of everybody."
+     ],
+     [
+      18,
+      "If it is possible on your part, live at peace with everyone."
+     ],
+     [
+      19,
+      "Do not avenge yourselves, beloved, but leave room for God’s wrath. For it is written: “Vengeance is Mine; I will repay, says the Lord.”"
+     ],
+     [
+      20,
+      "On the contrary, “If your enemy is hungry, feed him; if he is thirsty, give him a drink. For in so doing, you will heap burning coals on his head.”"
+     ],
+     [
+      21,
+      "Do not be overcome by evil, but overcome evil with good."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 16,
+  "main": {
+   "ref": "Hebrews 12:15–16",
+   "q": "hebrews 12:15-16",
+   "kjv": [
+    [
+     15,
+     "Looking diligently lest any man fail of the grace of God; lest any root of bitterness springing up trouble you, and thereby many be defiled;"
+    ],
+    [
+     16,
+     "Lest there be any fornicator, or profane person, as Esau, who for one morsel of meat sold his birthright."
+    ]
+   ],
+   "bsb": [
+    [
+     15,
+     "See to it that no one falls short of the grace of God, and that no root of bitterness springs up to cause trouble and defile many."
+    ],
+    [
+     16,
+     "See to it that no one is sexually immoral, or is godless like Esau, who for a single meal sold his birthright."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "1 Corinthians 15:10",
+    "q": "1 corinthians 15:10",
+    "kjv": [
+     [
+      10,
+      "But by the grace of God I am what I am: and his grace which was bestowed upon me was not in vain; but I laboured more abundantly than they all: yet not I, but the grace of God which was with me."
+     ]
+    ],
+    "bsb": [
+     [
+      10,
+      "But by the grace of God I am what I am, and His grace to me was not in vain. No, I worked harder than all of them—yet not I, but the grace of God that was with me."
+     ]
+    ]
+   },
+   {
+    "ref": "1 Peter 5:5",
+    "q": "1 peter 5:5",
+    "kjv": [
+     [
+      5,
+      "Likewise, ye younger, submit yourselves unto the elder. Yea, all of you be subject one to another, and be clothed with humility: for God resisteth the proud, and giveth grace to the humble."
+     ]
+    ],
+    "bsb": [
+     [
+      5,
+      "Young men, in the same way, submit yourselves to your elders. And all of you, clothe yourselves with humility toward one another, because, “God opposes the proud, but gives grace to the humble.”"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 17,
+  "main": {
+   "ref": "Genesis 3:9–10",
+   "q": "genesis 3:9-10",
+   "kjv": [
+    [
+     9,
+     "And the LORD God called unto Adam, and said unto him, Where art thou?"
+    ],
+    [
+     10,
+     "And he said, I heard thy voice in the garden, and I was afraid, because I was naked; and I hid myself."
+    ]
+   ],
+   "bsb": [
+    [
+     9,
+     "But the LORD God called out to the man, “Where are you?”"
+    ],
+    [
+     10,
+     "“I heard Your voice in the garden,” he replied, “and I was afraid because I was naked; so I hid myself.”"
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Psalm 23",
+    "q": "psalms 23",
+    "kjv": [
+     [
+      1,
+      "The LORD is my shepherd; I shall not want."
+     ],
+     [
+      2,
+      "He maketh me to lie down in green pastures: he leadeth me beside the still waters."
+     ],
+     [
+      3,
+      "He restoreth my soul: he leadeth me in the paths of righteousness for his name’s sake."
+     ],
+     [
+      4,
+      "Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me."
+     ],
+     [
+      5,
+      "Thou preparest a table before me in the presence of mine enemies: thou anointest my head with oil; my cup runneth over."
+     ],
+     [
+      6,
+      "Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the LORD for ever."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "The LORD is my shepherd; I shall not want."
+     ],
+     [
+      2,
+      "He makes me lie down in green pastures; He leads me beside quiet waters."
+     ],
+     [
+      3,
+      "He restores my soul; He guides me in the paths of righteousness for the sake of His name."
+     ],
+     [
+      4,
+      "Even though I walk through the valley of the shadow of death, I will fear no evil, for You are with me; Your rod and Your staff, they comfort me."
+     ],
+     [
+      5,
+      "You prepare a table before me in the presence of my enemies. You anoint my head with oil; my cup overflows."
+     ],
+     [
+      6,
+      "Surely goodness and mercy will follow me all the days of my life, and I will dwell in the house of the LORD forever."
+     ]
+    ]
+   },
+   {
+    "ref": "Psalm 121",
+    "q": "psalms 121",
+    "kjv": [
+     [
+      1,
+      "I will lift up mine eyes unto the hills, from whence cometh my help."
+     ],
+     [
+      2,
+      "My help cometh from the LORD, which made heaven and earth."
+     ],
+     [
+      3,
+      "He will not suffer thy foot to be moved: he that keepeth thee will not slumber."
+     ],
+     [
+      4,
+      "Behold, he that keepeth Israel shall neither slumber nor sleep."
+     ],
+     [
+      5,
+      "The LORD is thy keeper: the LORD is thy shade upon thy right hand."
+     ],
+     [
+      6,
+      "The sun shall not smite thee by day, nor the moon by night."
+     ],
+     [
+      7,
+      "The LORD shall preserve thee from all evil: he shall preserve thy soul."
+     ],
+     [
+      8,
+      "The LORD shall preserve thy going out and thy coming in from this time forth, and even for evermore."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "I lift up my eyes to the hills. From where does my help come?"
+     ],
+     [
+      2,
+      "My help comes from the LORD, the Maker of heaven and earth."
+     ],
+     [
+      3,
+      "He will not allow your foot to slip; your Protector will not slumber."
+     ],
+     [
+      4,
+      "Behold, the Protector of Israel will neither slumber nor sleep."
+     ],
+     [
+      5,
+      "The LORD is your keeper; the LORD is the shade on your right hand."
+     ],
+     [
+      6,
+      "The sun will not strike you by day, nor the moon by night."
+     ],
+     [
+      7,
+      "The LORD will guard you from all evil; He will preserve your soul."
+     ],
+     [
+      8,
+      "The LORD will watch over your coming and going, both now and forevermore."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 18,
+  "main": {
+   "ref": "Hebrews 4:9–11",
+   "q": "hebrews 4:9-11",
+   "kjv": [
+    [
+     9,
+     "There remaineth therefore a rest to the people of God."
+    ],
+    [
+     10,
+     "For he that is entered into his rest, he also hath ceased from his own works, as God did from his."
+    ],
+    [
+     11,
+     "Let us labour therefore to enter into that rest, lest any man fall after the same example of unbelief."
+    ]
+   ],
+   "bsb": [
+    [
+     9,
+     "There remains, then, a Sabbath rest for the people of God."
+    ],
+    [
+     10,
+     "For whoever enters God’s rest also rests from his own work, just as God did from His."
+    ],
+    [
+     11,
+     "Let us, therefore, make every effort to enter that rest, so that no one will fall by following the same pattern of disobedience."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Isaiah 41:10",
+    "q": "isaiah 41:10",
+    "kjv": [
+     [
+      10,
+      "Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness."
+     ]
+    ],
+    "bsb": [
+     [
+      10,
+      "Do not fear, for I am with you; do not be afraid, for I am your God. I will strengthen you; I will surely help you; I will uphold you with My right hand of righteousness."
+     ]
+    ]
+   },
+   {
+    "ref": "Matthew 6:25–34",
+    "q": "matthew 6:25-34",
+    "kjv": [
+     [
+      25,
+      "Therefore I say unto you, Take no thought for your life, what ye shall eat, or what ye shall drink; nor yet for your body, what ye shall put on. Is not the life more than meat, and the body than raiment?"
+     ],
+     [
+      26,
+      "Behold the fowls of the air: for they sow not, neither do they reap, nor gather into barns; yet your heavenly Father feedeth them. Are ye not much better than they?"
+     ],
+     [
+      27,
+      "Which of you by taking thought can add one cubit unto his stature?"
+     ],
+     [
+      28,
+      "And why take ye thought for raiment? Consider the lilies of the field, how they grow; they toil not, neither do they spin:"
+     ],
+     [
+      29,
+      "And yet I say unto you, That even Solomon in all his glory was not arrayed like one of these."
+     ],
+     [
+      30,
+      "Wherefore, if God so clothe the grass of the field, which to day is, and to morrow is cast into the oven, shall he not much more clothe you, O ye of little faith?"
+     ],
+     [
+      31,
+      "Therefore take no thought, saying, What shall we eat? or, What shall we drink? or, Wherewithal shall we be clothed?"
+     ],
+     [
+      32,
+      "(For after all these things do the Gentiles seek:) for your heavenly Father knoweth that ye have need of all these things."
+     ],
+     [
+      33,
+      "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you."
+     ],
+     [
+      34,
+      "Take therefore no thought for the morrow: for the morrow shall take thought for the things of itself. Sufficient unto the day is the evil thereof."
+     ]
+    ],
+    "bsb": [
+     [
+      25,
+      "Therefore I tell you, do not worry about your life, what you will eat or drink; or about your body, what you will wear. Is not life more than food, and the body more than clothes?"
+     ],
+     [
+      26,
+      "Look at the birds of the air: They do not sow or reap or gather into barns—and yet your heavenly Father feeds them. Are you not much more valuable than they?"
+     ],
+     [
+      27,
+      "Who of you by worrying can add a single hour to his life?"
+     ],
+     [
+      28,
+      "And why do you worry about clothes? Consider how the lilies of the field grow: They do not labor or spin."
+     ],
+     [
+      29,
+      "Yet I tell you that not even Solomon in all his glory was adorned like one of these."
+     ],
+     [
+      30,
+      "If that is how God clothes the grass of the field, which is here today and tomorrow is thrown into the furnace, will He not much more clothe you, O you of little faith?"
+     ],
+     [
+      31,
+      "Therefore do not worry, saying, ‘What shall we eat?’ or ‘What shall we drink?’ or ‘What shall we wear?’"
+     ],
+     [
+      32,
+      "For the Gentiles strive after all these things, and your heavenly Father knows that you need them."
+     ],
+     [
+      33,
+      "But seek first the kingdom of God and His righteousness, and all these things will be added unto you."
+     ],
+     [
+      34,
+      "Therefore do not worry about tomorrow, for tomorrow will worry about itself. Today has enough trouble of its own."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 19,
+  "main": {
+   "ref": "Philippians 4:4–9",
+   "q": "philippians 4:4-9",
+   "kjv": [
+    [
+     4,
+     "Rejoice in the Lord alway: and again I say, Rejoice."
+    ],
+    [
+     5,
+     "Let your moderation be known unto all men. The Lord is at hand."
+    ],
+    [
+     6,
+     "Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God."
+    ],
+    [
+     7,
+     "And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus."
+    ],
+    [
+     8,
+     "Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things."
+    ],
+    [
+     9,
+     "Those things, which ye have both learned, and received, and heard, and seen in me, do: and the God of peace shall be with you."
+    ]
+   ],
+   "bsb": [
+    [
+     4,
+     "Rejoice in the Lord always. I will say it again: Rejoice!"
+    ],
+    [
+     5,
+     "Let your gentleness be apparent to all. The Lord is near."
+    ],
+    [
+     6,
+     "Be anxious for nothing, but in everything, by prayer and petition, with thanksgiving, present your requests to God."
+    ],
+    [
+     7,
+     "And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."
+    ],
+    [
+     8,
+     "Finally, brothers, whatever is true, whatever is honorable, whatever is right, whatever is pure, whatever is lovely, whatever is admirable—if anything is excellent or praiseworthy—think on these things."
+    ],
+    [
+     9,
+     "Whatever you have learned or received or heard from me, or seen in me, put it into practice. And the God of peace will be with you."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Isaiah 43:1b",
+    "q": "isaiah 43:1",
+    "kjv": [
+     [
+      1,
+      "Fear not: for I have redeemed thee, I have called thee by thy name; thou art mine."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "Do not fear, for I have redeemed you; I have called you by your name; you are Mine!"
+     ]
+    ]
+   },
+   {
+    "ref": "Isaiah 40:28–31",
+    "q": "isaiah 40:28-31",
+    "kjv": [
+     [
+      28,
+      "Hast thou not known? hast thou not heard, that the everlasting God, the LORD, the Creator of the ends of the earth, fainteth not, neither is weary? there is no searching of his understanding."
+     ],
+     [
+      29,
+      "He giveth power to the faint; and to them that have no might he increaseth strength."
+     ],
+     [
+      30,
+      "Even the youths shall faint and be weary, and the young men shall utterly fall:"
+     ],
+     [
+      31,
+      "But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint."
+     ]
+    ],
+    "bsb": [
+     [
+      28,
+      "Do you not know? Have you not heard? The LORD is the everlasting God, the Creator of the ends of the earth. He will not grow tired or weary; His understanding is beyond searching out."
+     ],
+     [
+      29,
+      "He gives power to the faint and increases the strength of the weak."
+     ],
+     [
+      30,
+      "Even youths grow tired and weary, and young men stumble and fall."
+     ],
+     [
+      31,
+      "But those who wait upon the LORD will renew their strength; they will mount up with wings like eagles; they will run and not grow weary, they will walk and not faint."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 20,
+  "main": {
+   "ref": "Proverbs 25:28",
+   "q": "proverbs 25:28",
+   "kjv": [
+    [
+     28,
+     "He that hath no rule over his own spirit is like a city that is broken down, and without walls."
+    ]
+   ],
+   "bsb": [
+    [
+     28,
+     "Like a city whose walls are broken down is a man who does not control his temper."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "James 1:19–20",
+    "q": "james 1:19-20",
+    "kjv": [
+     [
+      19,
+      "Wherefore, my beloved brethren, let every man be swift to hear, slow to speak, slow to wrath:"
+     ],
+     [
+      20,
+      "For the wrath of man worketh not the righteousness of God."
+     ]
+    ],
+    "bsb": [
+     [
+      19,
+      "My beloved brothers, understand this: Everyone should be quick to listen, slow to speak, and slow to anger,"
+     ],
+     [
+      20,
+      "for man’s anger does not bring about the righteousness that God desires."
+     ]
+    ]
+   },
+   {
+    "ref": "Proverbs 22:24–25",
+    "q": "proverbs 22:24-25",
+    "kjv": [
+     [
+      24,
+      "Make no friendship with an angry man; and with a furious man thou shalt not go:"
+     ],
+     [
+      25,
+      "Lest thou learn his ways, and get a snare to thy soul."
+     ]
+    ],
+    "bsb": [
+     [
+      24,
+      "Do not make friends with an angry man, and do not associate with a hot-tempered man,"
+     ],
+     [
+      25,
+      "or you may learn his ways and entangle yourself in a snare."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 21,
+  "main": {
+   "ref": "Proverbs 12:25",
+   "q": "proverbs 12:25",
+   "kjv": [
+    [
+     25,
+     "Heaviness in the heart of man maketh it stoop: but a good word maketh it glad."
+    ]
+   ],
+   "bsb": [
+    [
+     25,
+     "Anxiety weighs down the heart of a man, but a good word cheers it up."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "Isaiah 55:1–3",
+    "q": "isaiah 55:1-3",
+    "kjv": [
+     [
+      1,
+      "Ho, every one that thirsteth, come ye to the waters, and he that hath no money; come ye, buy, and eat; yea, come, buy wine and milk without money and without price."
+     ],
+     [
+      2,
+      "Wherefore do ye spend money for that which is not bread? and your labour for that which satisfieth not? hearken diligently unto me, and eat ye that which is good, and let your soul delight itself in fatness."
+     ],
+     [
+      3,
+      "Incline your ear, and come unto me: hear, and your soul shall live; and I will make an everlasting covenant with you, even the sure mercies of David."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "Come, all you who are thirsty, come to the waters; and you without money, come, buy, and eat! Come, buy wine and milk without money and without cost!"
+     ],
+     [
+      2,
+      "Why spend money on that which is not bread, and your labor on that which does not satisfy? Listen carefully to Me, and eat what is good, and your soul will delight in the richest of foods."
+     ],
+     [
+      3,
+      "Incline your ear and come to Me; listen, so that your soul may live. I will make with you an everlasting covenant—My loving devotion promised to David."
+     ]
+    ]
+   },
+   {
+    "ref": "2 Corinthians 4:16–18",
+    "q": "2 corinthians 4:16-18",
+    "kjv": [
+     [
+      16,
+      "For which cause we faint not; but though our outward man perish, yet the inward man is renewed day by day."
+     ],
+     [
+      17,
+      "For our light affliction, which is but for a moment, worketh for us a far more exceeding and eternal weight of glory;"
+     ],
+     [
+      18,
+      "While we look not at the things which are seen, but at the things which are not seen: for the things which are seen are temporal; but the things which are not seen are eternal."
+     ]
+    ],
+    "bsb": [
+     [
+      16,
+      "Therefore we do not lose heart. Though our outer self is wasting away, yet our inner self is being renewed day by day."
+     ],
+     [
+      17,
+      "For our light and momentary affliction is producing for us an eternal glory that is far beyond comparison."
+     ],
+     [
+      18,
+      "So we fix our eyes not on what is seen, but on what is unseen. For what is seen is temporary, but what is unseen is eternal."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 22,
+  "main": {
+   "ref": "Romans 15:4, 13",
+   "q": "romans 15:4,13",
+   "kjv": [
+    [
+     4,
+     "For whatsoever things were written aforetime were written for our learning, that we through patience and comfort of the scriptures might have hope."
+    ],
+    [
+     13,
+     "Now the God of hope fill you with all joy and peace in believing, that ye may abound in hope, through the power of the Holy Ghost."
+    ]
+   ],
+   "bsb": [
+    [
+     4,
+     "For everything that was written in the past was written for our instruction, so that through endurance and the encouragement of the Scriptures, we might have hope."
+    ],
+    [
+     13,
+     "Now may the God of hope fill you with all joy and peace as you believe in Him, so that you may overflow with hope by the power of the Holy Spirit."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "James 1:2–4",
+    "q": "james 1:2-4",
+    "kjv": [
+     [
+      2,
+      "My brethren, count it all joy when ye fall into divers temptations;"
+     ],
+     [
+      3,
+      "Knowing this, that the trying of your faith worketh patience."
+     ],
+     [
+      4,
+      "But let patience have her perfect work, that ye may be perfect and entire, wanting nothing."
+     ]
+    ],
+    "bsb": [
+     [
+      2,
+      "Consider it pure joy, my brothers, when you encounter trials of many kinds,"
+     ],
+     [
+      3,
+      "because you know that the testing of your faith develops perseverance."
+     ],
+     [
+      4,
+      "Allow perseverance to finish its work, so that you may be mature and complete, not lacking anything."
+     ]
+    ]
+   },
+   {
+    "ref": "1 Peter 1:3, 6–8",
+    "q": "1 peter 1:3,6-8",
+    "kjv": [
+     [
+      3,
+      "Blessed be the God and Father of our Lord Jesus Christ, which according to his abundant mercy hath begotten us again unto a lively hope by the resurrection of Jesus Christ from the dead,"
+     ],
+     [
+      6,
+      "Wherein ye greatly rejoice, though now for a season, if need be, ye are in heaviness through manifold temptations:"
+     ],
+     [
+      7,
+      "That the trial of your faith, being much more precious than of gold that perisheth, though it be tried with fire, might be found unto praise and honour and glory at the appearing of Jesus Christ:"
+     ],
+     [
+      8,
+      "Whom having not seen, ye love; in whom, though now ye see him not, yet believing, ye rejoice with joy unspeakable and full of glory:"
+     ]
+    ],
+    "bsb": [
+     [
+      3,
+      "Blessed be the God and Father of our Lord Jesus Christ! By His great mercy He has given us new birth into a living hope through the resurrection of Jesus Christ from the dead,"
+     ],
+     [
+      6,
+      "In this you greatly rejoice, though now for a little while you may have had to suffer grief in various trials"
+     ],
+     [
+      7,
+      "so that the proven character of your faith—more precious than gold, which perishes even though refined by fire—may result in praise, glory, and honor at the revelation of Jesus Christ."
+     ],
+     [
+      8,
+      "Though you have not seen Him, you love Him; and though you do not see Him now, you believe in Him and rejoice with an inexpressible and glorious joy,"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 23,
+  "main": {
+   "ref": "Ephesians 2:1–3",
+   "q": "ephesians 2:1-3",
+   "kjv": [
+    [
+     1,
+     "And you hath he quickened, who were dead in trespasses and sins;"
+    ],
+    [
+     2,
+     "Wherein in time past ye walked according to the course of this world, according to the prince of the power of the air, the spirit that now worketh in the children of disobedience:"
+    ],
+    [
+     3,
+     "Among whom also we all had our conversation in times past in the lusts of our flesh, fulfilling the desires of the flesh and of the mind; and were by nature the children of wrath, even as others."
+    ]
+   ],
+   "bsb": [
+    [
+     1,
+     "And you were dead in your trespasses and sins,"
+    ],
+    [
+     2,
+     "in which you used to walk when you conformed to the ways of this world and of the ruler of the power of the air, the spirit who is now at work in the sons of disobedience."
+    ],
+    [
+     3,
+     "All of us also lived among them at one time, fulfilling the cravings of our flesh and indulging its desires and thoughts. Like the rest, we were by nature children of wrath."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "2 Corinthians 10:3–5",
+    "q": "2 corinthians 10:3-5",
+    "kjv": [
+     [
+      3,
+      "For though we walk in the flesh, we do not war after the flesh:"
+     ],
+     [
+      4,
+      "(For the weapons of our warfare are not carnal, but mighty through God to the pulling down of strong holds;)"
+     ],
+     [
+      5,
+      "Casting down imaginations, and every high thing that exalteth itself against the knowledge of God, and bringing into captivity every thought to the obedience of Christ;"
+     ]
+    ],
+    "bsb": [
+     [
+      3,
+      "For though we live in the flesh, we do not wage war according to the flesh."
+     ],
+     [
+      4,
+      "The weapons of our warfare are not the weapons of the world. Instead, they have divine power to demolish strongholds."
+     ],
+     [
+      5,
+      "We tear down arguments and every presumption set up against the knowledge of God; and we take captive every thought to make it obedient to Christ."
+     ]
+    ]
+   },
+   {
+    "ref": "James 1:12–15",
+    "q": "james 1:12-15",
+    "kjv": [
+     [
+      12,
+      "Blessed is the man that endureth temptation: for when he is tried, he shall receive the crown of life, which the Lord hath promised to them that love him."
+     ],
+     [
+      13,
+      "Let no man say when he is tempted, I am tempted of God: for God cannot be tempted with evil, neither tempteth he any man:"
+     ],
+     [
+      14,
+      "But every man is tempted, when he is drawn away of his own lust, and enticed."
+     ],
+     [
+      15,
+      "Then when lust hath conceived, it bringeth forth sin: and sin, when it is finished, bringeth forth death."
+     ]
+    ],
+    "bsb": [
+     [
+      12,
+      "Blessed is the man who perseveres under trial, because when he has stood the test, he will receive the crown of life that God has promised to those who love Him."
+     ],
+     [
+      13,
+      "When tempted, no one should say, “God is tempting me.” For God cannot be tempted by evil, nor does He tempt anyone."
+     ],
+     [
+      14,
+      "But each one is tempted when by his own evil desires he is lured away and enticed."
+     ],
+     [
+      15,
+      "Then after desire has conceived, it gives birth to sin; and sin, when it is full-grown, gives birth to death."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "n": 24,
+  "main": {
+   "ref": "1 Timothy 4:7b–8",
+   "q": "1 timothy 4:7-8",
+   "kjv": [
+    [
+     7,
+     "Exercise thyself rather unto godliness."
+    ],
+    [
+     8,
+     "For bodily exercise profiteth little: but godliness is profitable unto all things, having promise of the life that now is, and of that which is to come."
+    ]
+   ],
+   "bsb": [
+    [
+     7,
+     "Instead, train yourself for godliness."
+    ],
+    [
+     8,
+     "For physical exercise is of limited value, but godliness is valuable in every way, holding promise for the present life and for the one to come."
+    ]
+   ]
+  },
+  "optional": [
+   {
+    "ref": "James 1:21–25",
+    "q": "james 1:21-25",
+    "kjv": [
+     [
+      21,
+      "Wherefore lay apart all filthiness and superfluity of naughtiness, and receive with meekness the engrafted word, which is able to save your souls."
+     ],
+     [
+      22,
+      "But be ye doers of the word, and not hearers only, deceiving your own selves."
+     ],
+     [
+      23,
+      "For if any be a hearer of the word, and not a doer, he is like unto a man beholding his natural face in a glass:"
+     ],
+     [
+      24,
+      "For he beholdeth himself, and goeth his way, and straightway forgetteth what manner of man he was."
+     ],
+     [
+      25,
+      "But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed."
+     ]
+    ],
+    "bsb": [
+     [
+      21,
+      "Therefore, get rid of all moral filth and every expression of evil, and humbly accept the word planted in you, which can save your souls."
+     ],
+     [
+      22,
+      "Be doers of the word, and not hearers only. Otherwise, you are deceiving yourselves."
+     ],
+     [
+      23,
+      "For anyone who hears the word but does not carry it out is like a man who looks at his face in a mirror,"
+     ],
+     [
+      24,
+      "and after observing himself goes away and immediately forgets what he looks like."
+     ],
+     [
+      25,
+      "But the one who looks intently into the perfect law of freedom, and continues to do so—not being a forgetful hearer, but an effective doer—he will be blessed in what he does."
+     ]
+    ]
+   },
+   {
+    "ref": "Psalm 1",
+    "q": "psalms 1",
+    "kjv": [
+     [
+      1,
+      "Blessed is the man that walketh not in the counsel of the ungodly, nor standeth in the way of sinners, nor sitteth in the seat of the scornful."
+     ],
+     [
+      2,
+      "But his delight is in the law of the LORD; and in his law doth he meditate day and night."
+     ],
+     [
+      3,
+      "And he shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season; his leaf also shall not wither; and whatsoever he doeth shall prosper."
+     ],
+     [
+      4,
+      "The ungodly are not so: but are like the chaff which the wind driveth away."
+     ],
+     [
+      5,
+      "Therefore the ungodly shall not stand in the judgment, nor sinners in the congregation of the righteous."
+     ],
+     [
+      6,
+      "For the LORD knoweth the way of the righteous: but the way of the ungodly shall perish."
+     ]
+    ],
+    "bsb": [
+     [
+      1,
+      "Blessed is the man who does not walk in the counsel of the wicked, or set foot on the path of sinners, or sit in the seat of mockers."
+     ],
+     [
+      2,
+      "But his delight is in the Law of the LORD, and on His law he meditates day and night."
+     ],
+     [
+      3,
+      "He is like a tree planted by streams of water, yielding its fruit in season, whose leaf does not wither, and who prospers in all he does."
+     ],
+     [
+      4,
+      "Not so the wicked! For they are like chaff driven off by the wind."
+     ],
+     [
+      5,
+      "Therefore the wicked will not stand in the judgment, nor sinners in the assembly of the righteous."
+     ],
+     [
+      6,
+      "For the LORD guards the path of the righteous, but the way of the wicked will perish."
+     ]
+    ]
+   }
+  ]
+ }
+];
+
+  const OFFLINE = ["kjv", "bsb"];
+  const ABBR = { kjv: "KJV", bsb: "BSB", darby: "Darby", ylt: "YLT" };
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clean = s => s.replace(/\s+/g, " ").trim();
+  const verseHTML = vs => vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t)}</span>`).join(" ");
+
+  const $sessions = document.getElementById("sessions");
+  const $select = document.getElementById("translation");
+  let current = "kjv";
+
+  // Licensed translations (ESV, CSB, NASB) are added at deploy time by the GitHub Action.
+  // Without that data (e.g. opening the file locally) they simply don't appear.
+  let LICENSED = {};
+  try { LICENSED = (JSON.parse(document.getElementById("licensed-data").textContent) || {}).translations || {}; } catch (e) {}
+  const $builtInGroup = $select.querySelector("optgroup");
+  const $notices = document.getElementById("licensed-notices");
+  ["esv", "csb", "nasb"].forEach(key => {
+    const t = LICENSED[key];
+    if (!t || !t.passages) return;
+    OFFLINE.push(key); ABBR[key] = t.abbr;
+    const o = document.createElement("option");
+    o.value = key; o.textContent = `${t.name} (${t.abbr})`;
+    $builtInGroup.appendChild(o);
+    const p = document.createElement("p");
+    const b = document.createElement("strong"); b.textContent = t.abbr + ": ";
+    p.append(b, t.notice + " ");
+    (t.links || []).forEach(([label, href], i) => {
+      const a = document.createElement("a");
+      a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = label;
+      if (i) p.append(" · ");
+      p.append(a);
+    });
+    $notices.appendChild(p);
+  });
+  const builtIn = (t, card) => LICENSED[t] ? LICENSED[t].passages[card.p.ref] : card.p[t];
+
+  // API.Bible's Fair Use Management System: report each passage's token when it's shown
+  const FUMS = (() => {
+    const rand = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+    let dId = store.get("qns-fums-device");
+    if (!dId) { dId = rand(); store.set("qns-fums-device", dId); }
+    const sId = rand();
+    const sent = new Set(); let pending = []; let timer = null;
+    function flush() {
+      timer = null;
+      if (!pending.length) return;
+      const q = pending.map(t => "t=" + encodeURIComponent(t)).join("&");
+      new Image().src = `https://fums.api.bible/f3?${q}&dId=${encodeURIComponent(dId)}&sId=${encodeURIComponent(sId)}`;
+      pending = [];
+    }
+    return {
+      track(tokens) {
+        (tokens || []).forEach(t => { if (!sent.has(t)) { sent.add(t); pending.push(t); } });
+        if (pending.length && !timer) timer = setTimeout(flush, 800);
+      }
+    };
+  })();
+  function reportView(card) {
+    const t = LICENSED[current];
+    if (t && t.fums && card.visible && !card.el.closest(".session.collapsed") && !card.el.closest("body.hide-optional .optional"))
+      FUMS.track(t.fums[card.p.ref]);
+  }
+
+  // ---------- Build page ----------
+  const cards = [];   // { el, p }
+  function cardHTML(p, primary) {
+    return `<article aria-label="Tap to blur or reveal" class="verse-card${primary ? " primary" : ""}" tabindex="0">
+        <div class="card-top"><h3 class="ref">${esc(p.ref)}</h3><span class="ver">KJV</span></div>
+        <p class="text">${verseHTML(p.kjv)}</p>
+        <div class="note" hidden></div>
+        <div class="card-foot"><button class="copy" type="button">Copy</button></div>
+        <div class="hint">Tap to reveal</div>
+      </article>`;
+  }
+  SESSIONS.forEach(s => {
+    const sec = document.createElement("section");
+    sec.className = "session";
+    sec.id = "session-" + s.n;
+    sec.innerHTML = `
+      <h2 class="session-title"><button class="session-head" type="button" aria-expanded="true" aria-controls="body-${s.n}">
+        <span class="session-num">${s.n}</span><span class="session-label">Session ${s.n}</span>
+        <span class="session-ref">${esc(s.main.ref)}</span><span class="line"></span>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button></h2>
+      <div class="session-body" id="body-${s.n}"><div class="session-inner">
+      ${cardHTML(s.main, true)}
+      ${s.optional.length ? `<div class="optional"><div class="optional-label">Optional</div>
+        <div class="optional-grid">${s.optional.map(p => cardHTML(p, false)).join("")}</div></div>` : ""}
+      </div></div>`;
+    $sessions.appendChild(sec);
+    const els = sec.querySelectorAll(".verse-card");
+    [s.main, ...s.optional].forEach((p, i) => { els[i].__p = p; cards.push({ el: els[i], p }); });
+  });
+  document.querySelectorAll(".session-label").forEach(h => h.style.margin = "0");
+
+  // ---------- Online translations (bible-api.com) ----------
+  const memCache = {};
+  const cacheKey = (t, q) => `qns:${t}:${q}`;
+  function getCached(t, q) {
+    const k = cacheKey(t, q);
+    if (memCache[k]) return memCache[k];
+    const s = store.get(k);
+    if (s) { try { return (memCache[k] = JSON.parse(s)); } catch (e) {} }
+    return null;
+  }
+  function setCached(t, q, vs) { const k = cacheKey(t, q); memCache[k] = vs; store.set(k, JSON.stringify(vs)); }
+
+  // The API allows ~15 requests per 30 seconds, so requests are queued and spaced out.
+  const queue = []; const queued = new Set(); let busy = false;
+  function enqueue(t, card) {
+    const k = cacheKey(t, card.p.q);
+    if (queued.has(k)) return;
+    queued.add(k); queue.push({ t, card, k }); pump();
+  }
+  async function pump() {
+    if (busy) return; busy = true;
+    while (queue.length) {
+      // Prefer the translation currently selected; drop stale jobs
+      const i = queue.findIndex(j => j.t === current);
+      if (i < 0) { queue.length = 0; queued.clear(); break; }
+      const job = queue.splice(i, 1)[0];
+      let wait = 2100;
+      try {
+        const res = await fetch(`https://bible-api.com/${encodeURIComponent(job.card.p.q)}?translation=${job.t}`);
+        if (res.status === 429) { queue.unshift(job); wait = 30000; }
+        else {
+          if (!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          const vs = (data.verses || []).map(v => [v.verse, clean(v.text)]);
+          if (!vs.length) throw new Error("empty");
+          setCached(job.t, job.card.p.q, vs);
+          queued.delete(job.k);
+          sameQuery(job.card.p.q).forEach(render);
+        }
+      } catch (e) {
+        queued.delete(job.k);
+        sameQuery(job.card.p.q).forEach(c => { if (current === job.t) showFallback(c); });
+      }
+      await new Promise(r => setTimeout(r, wait));
+    }
+    busy = false;
+  }
+  const sameQuery = q => cards.filter(c => c.p.q === q);
+
+  function showFallback(card) {
+    const $note = card.el.querySelector(".note");
+    card.el.querySelector(".text").classList.remove("loading");
+    $note.textContent = `Couldn't load ${ABBR[current]} right now, so the KJV is shown.`;
+    $note.hidden = false;
+  }
+
+  function setVerses(card, vs, label) {
+    card.verses = vs; card.label = label;
+    card.el.querySelector(".text").innerHTML = verseHTML(vs);
+    card.el.querySelector(".ver").textContent = label;
+  }
+
+  function render(card) {
+    const $text = card.el.querySelector(".text");
+    const $note = card.el.querySelector(".note");
+    $note.hidden = true;
+    $text.classList.remove("loading");
+    if (OFFLINE.includes(current)) {
+      const vs = builtIn(current, card);
+      if (vs) { setVerses(card, vs, ABBR[current]); reportView(card); return; }
+      setVerses(card, card.p.kjv, "KJV");
+      $note.textContent = `${ABBR[current]} isn't available for this passage, so the KJV is shown.`;
+      $note.hidden = false;
+      return;
+    }
+    const hit = getCached(current, card.p.q);
+    if (hit) return setVerses(card, hit, ABBR[current]);
+    setVerses(card, card.p.kjv, "KJV");
+    $text.classList.add("loading");
+    if (card.visible && !card.el.closest("body.hide-optional .optional")) enqueue(current, card);
+  }
+
+  // Only fetch online translations for cards that are on (or near) the screen
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const card = cards.find(c => c.el === e.target);
+      card.visible = e.isIntersecting;
+      if (card.visible && !OFFLINE.includes(current) && !getCached(current, card.p.q)) render(card);
+      if (card.visible) reportView(card);
+    });
+  }, { rootMargin: "300px 0px" });
+  cards.forEach(c => io.observe(c.el));
+
+  function setTranslation(t) {
+    current = ABBR[t] ? t : "kjv";
+    $select.value = current;
+    store.set("qns-translation", current);
+    cards.forEach(render);
+  }
+  $select.addEventListener("change", () => setTranslation($select.value));
+
+  // ---------- Copy & practice reveal ----------
+  $sessions.addEventListener("click", async e => {
+    const card = e.target.closest(".verse-card");
+    if (!card) return;
+    const c = cards.find(x => x.el === card);
+    const btn = e.target.closest(".copy");
+    if (btn) {
+      const body = (c.verses || c.p.kjv).map(v => v[1]).join(" ");
+      try { await navigator.clipboard.writeText(`${body}\n— ${c.p.ref} (${c.label || "KJV"})`); btn.textContent = "Copied"; }
+      catch (err) { btn.textContent = "Copy failed"; }
+      setTimeout(() => (btn.textContent = "Copy"), 1600);
+      return;
+    }
+    if (String(window.getSelection && getSelection()).trim()) return;   // don't blur while selecting text
+    card.classList.toggle("blurred");
+  });
+  $sessions.addEventListener("keydown", e => {
+    const card = e.target.closest(".verse-card");
+    if (card && e.target === card && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault(); card.classList.toggle("blurred");
+    }
+  });
+
+  // ---------- Options ----------
+  const $panel = document.getElementById("panel");
+  const $optionsBtn = document.getElementById("optionsBtn");
+  $optionsBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    const open = !$panel.classList.contains("open");
+    $panel.classList.toggle("open", open);
+    $optionsBtn.setAttribute("aria-expanded", open);
+  });
+  document.addEventListener("click", e => {
+    if (!$panel.contains(e.target) && e.target !== $optionsBtn) { $panel.classList.remove("open"); $optionsBtn.setAttribute("aria-expanded", "false"); }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { $panel.classList.remove("open"); $optionsBtn.setAttribute("aria-expanded", "false"); } });
+
+  function applyOption(name, on) {
+    if (name === "reverse") {
+      const secs = [...$sessions.children].sort((a, b) =>
+        (on ? -1 : 1) * (parseInt(a.id.split("-")[1]) - parseInt(b.id.split("-")[1])));
+      secs.forEach(s => $sessions.appendChild(s));
+    } else {
+      document.body.classList.toggle(name, on);
+    }
+    if (name === "hide-optional" && !on) cards.forEach(c => c.visible && render(c));
+  }
+  document.querySelectorAll("[data-opt]").forEach(input => {
+    const name = input.dataset.opt;
+    input.checked = store.get("qns-opt-" + name) === "1";
+    if (input.checked) applyOption(name, true);
+    input.addEventListener("change", () => { store.set("qns-opt-" + name, input.checked ? "1" : "0"); applyOption(name, input.checked); });
+  });
+
+  const $dark = document.getElementById("darkToggle");
+  $dark.checked = document.documentElement.getAttribute("data-theme") === "dark";
+  $dark.addEventListener("change", () => {
+    const t = $dark.checked ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+    store.set("qns-theme", t);
+  });
+
+  // ---------- Collapsing sessions ----------
+  const $collapseAll = document.getElementById("collapseAll");
+  const sections = [...$sessions.children];
+  let collapsed = new Set();
+  try { collapsed = new Set(JSON.parse(store.get("qns-collapsed") || "[]")); } catch (e) {}
+
+  function setCollapsed(sec, on) {
+    sec.classList.toggle("collapsed", on);
+    sec.querySelector(".session-head").setAttribute("aria-expanded", String(!on));
+    const n = parseInt(sec.id.split("-")[1]);
+    on ? collapsed.add(n) : collapsed.delete(n);
+  }
+  function syncCollapseAll() {
+    const all = sections.every(s => s.classList.contains("collapsed"));
+    $collapseAll.querySelector(".lbl").textContent = all ? "Expand all" : "Collapse all";
+    $collapseAll.querySelector("svg").style.transform = all ? "rotate(180deg)" : "";
+    $collapseAll.setAttribute("aria-pressed", String(all));
+    store.set("qns-collapsed", JSON.stringify([...collapsed]));
+  }
+  sections.forEach(sec => {
+    setCollapsed(sec, collapsed.has(parseInt(sec.id.split("-")[1])));
+    sec.querySelector(".session-head").addEventListener("click", () => {
+      setCollapsed(sec, !sec.classList.contains("collapsed")); syncCollapseAll();
+    });
+  });
+  $collapseAll.addEventListener("click", () => {
+    const collapse = !sections.every(s => s.classList.contains("collapsed"));
+    sections.forEach(s => setCollapsed(s, collapse)); syncCollapseAll();
+  });
+  syncCollapseAll();
+
+  setTranslation(store.get("qns-translation") || "kjv");
+</script>
+</body>
+</html>

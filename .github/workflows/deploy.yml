@@ -1,0 +1,70 @@
+# Builds and publishes the site to GitHub Pages, adding the ESV, CSB and NASB at deploy time.
+#
+# One-time setup:
+#   1. Settings → Secrets and variables → Actions → Secrets → New repository secret
+#        ESV_API_KEY    = your key from api.esv.org
+#        API_BIBLE_KEY  = your key from api.bible (with CSB and NASB enabled)
+#   2. Settings → Pages → Build and deployment → Source: "GitHub Actions"
+#   (Optional) Settings → Secrets and variables → Actions → Variables:
+#        CSB_BIBLE_ID / NASB_BIBLE_ID, only if the wrong edition is picked automatically.
+#
+# Runs on every push, every Monday (to refresh the licensed text, as the ESV and
+# API.Bible terms ask), and on demand from the Actions tab ("Run workflow").
+# A missing key just leaves that translation out; the site still deploys.
+
+name: Deploy site
+
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "17 3 * * 1"   # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Copy site files
+        run: |
+          mkdir -p _site
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'scripts' --exclude 'README.md' --exclude '_site' ./ _site/
+
+      - name: Add ESV, CSB and NASB text
+        env:
+          ESV_API_KEY: ${{ secrets.ESV_API_KEY }}
+          API_BIBLE_KEY: ${{ secrets.API_BIBLE_KEY }}
+          CSB_BIBLE_ID: ${{ vars.CSB_BIBLE_ID }}
+          NASB_BIBLE_ID: ${{ vars.NASB_BIBLE_ID }}
+        run: node scripts/fetch-licensed.mjs _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

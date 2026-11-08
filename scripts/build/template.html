@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QNS Memory Verses</title>
+<meta name="description" content="QNS Memory Verses, grouped by session.">
+<script>
+  // Apply saved theme before first paint to avoid a flash
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("qns-theme"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f3ee; --bg-2: #efe9e0; --card: #fffdf9; --card-2: #fbf8f3;
+    --ink: #1f1c18; --muted: #6f675d; --line: #e4dccf;
+    --accent: #9a6b3c; --accent-soft: #f1e6d8; --on-accent: #fff;
+    --shadow: 0 1px 2px rgba(40,30,20,.04), 0 8px 24px rgba(40,30,20,.06);
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  [data-theme="dark"] {
+    --bg: #141210; --bg-2: #1b1815; --card: #1f1c19; --card-2: #1a1815;
+    --ink: #efe8dd; --muted: #a69d90; --line: #322d27;
+    --accent: #d4a373; --accent-soft: #2d241b; --on-accent: #1a1510;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; font-family: var(--sans); color: var(--ink); line-height: 1.5; min-height: 100vh;
+    background: radial-gradient(1200px 500px at 50% -200px, var(--bg-2), transparent 70%), var(--bg);
+    transition: background-color .25s, color .25s;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: saturate(140%) blur(12px); -webkit-backdrop-filter: saturate(140%) blur(12px);
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { max-width: 880px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { font-family: var(--serif); font-weight: 600; font-size: 1.35rem; letter-spacing: .01em; }
+  .controls { display: flex; align-items: center; gap: 8px; position: relative; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: ""; position: absolute; right: 14px; top: 50%; width: 7px; height: 7px;
+    border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted);
+    transform: translateY(-70%) rotate(45deg); pointer-events: none;
+  }
+  select, .btn {
+    font: 500 .875rem var(--sans); color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 9px 38px 9px 16px;
+    appearance: none; -webkit-appearance: none; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+    max-width: 62vw; text-overflow: ellipsis;
+  }
+  .btn { padding: 9px 14px; display: inline-flex; align-items: center; gap: 7px; }
+  .btn svg { width: 16px; height: 16px; }
+  select:hover, .btn:hover { border-color: var(--accent); }
+  :is(select, .btn, .copy, .verse-card, .switch input):focus-visible {
+    outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* Options panel */
+  .panel {
+    position: absolute; right: 0; top: calc(100% + 10px); width: 280px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 8px; display: none;
+  }
+  .panel.open { display: block; }
+  .panel h3 { margin: 6px 10px 4px; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px; border-radius: 10px; cursor: pointer; font-size: .9rem; }
+  .switch:hover { background: var(--accent-soft); }
+  .switch small { display: block; color: var(--muted); font-size: .76rem; margin-top: 1px; }
+  .switch input {
+    appearance: none; -webkit-appearance: none; flex: none; width: 38px; height: 22px; border-radius: 999px;
+    background: var(--line); position: relative; cursor: pointer; transition: background .2s; margin: 0;
+  }
+  .switch input::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s;
+  }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+
+  /* Hero */
+  .hero { max-width: 880px; margin: 0 auto; padding: 60px 20px 18px; text-align: center; }
+  .eyebrow { font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2.6rem, 7vw, 4rem); line-height: 1.05; margin: 12px 0 14px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 auto; max-width: 520px; }
+  .rule { width: 56px; height: 1px; background: var(--accent); margin: 26px auto 0; opacity: .6; }
+
+  /* Sessions */
+  main { max-width: 880px; margin: 0 auto; padding: 16px 20px 80px; }
+  .toolbar { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .btn.small { padding: 7px 14px; font-size: .8rem; color: var(--muted); }
+  .btn.small:hover { color: var(--accent); }
+  .btn.small svg { width: 14px; height: 14px; transition: transform .3s; }
+  .session { margin-top: 28px; }
+  .session-title { margin: 0; }
+  .session-head {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 6px 0; margin: 0;
+    background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+    border-radius: 999px; -webkit-tap-highlight-color: transparent;
+  }
+  .session-head:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .session-ref {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    max-width: 0; opacity: 0; transition: opacity .25s, max-width .3s;
+  }
+  .session.collapsed .session-ref { max-width: 60vw; opacity: 1; }
+  .chev {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--muted); border: 1px solid var(--line); transition: transform .3s ease, color .15s, border-color .15s;
+  }
+  .chev svg { width: 14px; height: 14px; }
+  .session-head:hover .chev { color: var(--accent); border-color: var(--accent); }
+  .session.collapsed .chev { transform: rotate(-90deg); }
+  .session-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .35s ease; }
+  .session.collapsed .session-body { grid-template-rows: 0fr; }
+  .session-inner { overflow: hidden; min-height: 0; padding: 14px 14px 30px; margin: 0 -14px -30px; }
+  .session.collapsed .session-inner { visibility: hidden; transition: visibility 0s .35s; }
+  .session.collapsed .session-inner { padding-top: 0; }
+  .session.collapsed + .session.collapsed { margin-top: 8px; }
+  .session-num {
+    width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); font-family: var(--serif); font-weight: 600; font-size: 1.2rem;
+  }
+  .session-label { flex: none; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .session-head .line { flex: 1; height: 1px; background: var(--line); min-width: 16px; }
+
+  .verse-card {
+    position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 28px 32px 22px; box-shadow: var(--shadow); transition: transform .2s ease, box-shadow .2s ease, background-color .25s;
+  }
+  .verse-card.primary::before {
+    content: ""; position: absolute; left: 0; top: 28px; bottom: 28px; width: 3px;
+    border-radius: 0 3px 3px 0; background: var(--accent); opacity: .75;
+  }
+  @media (hover: hover) { .verse-card:hover { transform: translateY(-2px); } }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .ref { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; margin: 0; line-height: 1.2; }
+  .ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+  .text { font-family: var(--serif); font-size: 1.32rem; line-height: 1.6; margin: 0; transition: filter .3s ease, opacity .3s ease; }
+  .text sup { font-family: var(--sans); font-size: .6rem; font-weight: 600; color: var(--accent); margin-right: 3px; vertical-align: .55em; line-height: 0; }
+  .text.loading { opacity: .4; }
+  body.verse-lines .text .v { display: block; }
+  body.verse-lines .text .v + .v { margin-top: .45em; }
+  .note { font-size: .8rem; color: var(--muted); margin-top: 10px; }
+
+  .card-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+  .copy {
+    font: 500 .76rem var(--sans); color: var(--muted); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px; cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Optional verses */
+  .optional { margin-top: 18px; }
+  .optional-label { font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); margin: 0 0 10px 4px; }
+  .optional-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .optional .verse-card { background: var(--card-2); box-shadow: none; padding: 22px 24px 18px; border-radius: 16px; }
+  .optional .ref { font-size: 1.25rem; }
+  .optional .text { font-size: 1.14rem; }
+  body.hide-optional .optional { display: none; }
+
+  /* Tap a card to blur it */
+  .verse-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .verse-card.blurred .text { filter: blur(7px); opacity: .55; user-select: none; }
+  .hint { display: none; position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: .78rem; color: var(--muted); pointer-events: none; }
+  .verse-card.blurred .hint { display: block; }
+  .verse-card.blurred .card-foot { visibility: hidden; }
+
+  footer p { margin: 0 0 12px; }
+  footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 0 20px 48px; max-width: 640px; margin: 0 auto; }
+  footer a { color: inherit; }
+
+  @media (max-width: 560px) {
+    .bar { padding: 10px 14px; }
+    .verse-card { padding: 22px 22px 18px; border-radius: 16px; }
+    .text { font-size: 1.2rem; }
+    .ref { font-size: 1.4rem; }
+    .optional-grid { grid-template-columns: 1fr; }
+    .hero { padding-top: 40px; }
+    .bar .btn span { display: none; }
+    .session.collapsed .session-label { display: none; }
+    .session.collapsed .session-ref { max-width: 72vw; }
+    .panel { width: min(290px, calc(100vw - 28px)); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand">QNS</div>
+    <div class="controls">
+      <label class="select-wrap">
+        <span class="sr">Translation</span>
+        <select id="translation">
+          <optgroup label="Built in · works offline">
+            <option value="kjv">King James Version (KJV)</option>
+            <option value="bsb">Berean Standard Bible (BSB)</option>
+          </optgroup>
+          <optgroup label="Loads online">
+            <option value="darby">Darby Translation</option>
+            <option value="ylt">Young's Literal Translation (YLT)</option>
+          </optgroup>
+        </select>
+      </label>
+      <button class="btn" id="optionsBtn" aria-expanded="false" aria-controls="panel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        <span>Options</span>
+      </button>
+      <div class="panel" id="panel" role="dialog" aria-label="Display options">
+        <h3>Display</h3>
+        <label class="switch"><div>Hide optional verses</div><input type="checkbox" data-opt="hide-optional"></label>
+        <label class="switch"><div>Reverse session order<small>Newest session first</small></div><input type="checkbox" data-opt="reverse"></label>
+        <label class="switch"><div>Dark mode</div><input type="checkbox" id="darkToggle"></label>
+        <label class="switch"><div>Each verse on a new line</div><input type="checkbox" data-opt="verse-lines"></label>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">Hide God's word in your heart</div>
+  <h1>QNS Memory Verses</h1>
+  <p class="sub">Choose a translation above. Tap any verse to blur it and test yourself.</p>
+  <div class="rule"></div>
+</section>
+
+<main>
+  <div class="toolbar">
+    <button class="btn small" id="collapseAll" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5-5 5 5"/></svg>
+      <span class="lbl">Collapse all</span>
+    </button>
+  </div>
+  <div id="sessions"></div>
+</main>
+
+<footer>
+  <p>Built-in translations work offline. Others load from
+  <a href="https://bible-api.com" target="_blank" rel="noopener">bible-api.com</a>.
+  The KJV, BSB and online translations are in the public domain.</p>
+  <div id="licensed-notices"></div>
+</footer>
+
+<!-- Filled in by the GitHub Action at deploy time (scripts/fetch-licensed.mjs). Leave as null here. -->
+<script id="licensed-data" type="application/json">null</script>
+
+<script>
+  // [verse, text] pairs per translation. Generated from eBible.org.
+  const SESSIONS = /*__DATA__*/;
+
+  const OFFLINE = ["kjv", "bsb"];
+  const ABBR = { kjv: "KJV", bsb: "BSB", darby: "Darby", ylt: "YLT" };
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clean = s => s.replace(/\s+/g, " ").trim();
+  const verseHTML = vs => vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t)}</span>`).join(" ");
+
+  const $sessions = document.getElementById("sessions");
+  const $select = document.getElementById("translation");
+  let current = "kjv";
+
+  // Licensed translations (ESV, CSB, NASB) are added at deploy time by the GitHub Action.
+  // Without that data (e.g. opening the file locally) they simply don't appear.
+  let LICENSED = {};
+  try { LICENSED = (JSON.parse(document.getElementById("licensed-data").textContent) || {}).translations || {}; } catch (e) {}
+  const $builtInGroup = $select.querySelector("optgroup");
+  const $notices = document.getElementById("licensed-notices");
+  ["esv", "csb", "nasb"].forEach(key => {
+    const t = LICENSED[key];
+    if (!t || !t.passages) return;
+    OFFLINE.push(key); ABBR[key] = t.abbr;
+    const o = document.createElement("option");
+    o.value = key; o.textContent = `${t.name} (${t.abbr})`;
+    $builtInGroup.appendChild(o);
+    const p = document.createElement("p");
+    const b = document.createElement("strong"); b.textContent = t.abbr + ": ";
+    p.append(b, t.notice + " ");
+    (t.links || []).forEach(([label, href], i) => {
+      const a = document.createElement("a");
+      a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = label;
+      if (i) p.append(" · ");
+      p.append(a);
+    });
+    $notices.appendChild(p);
+  });
+  const builtIn = (t, card) => LICENSED[t] ? LICENSED[t].passages[card.p.ref] : card.p[t];
+
+  // API.Bible's Fair Use Management System: report each passage's token when it's shown
+  const FUMS = (() => {
+    const rand = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+    let dId = store.get("qns-fums-device");
+    if (!dId) { dId = rand(); store.set("qns-fums-device", dId); }
+    const sId = rand();
+    const sent = new Set(); let pending = []; let timer = null;
+    function flush() {
+      timer = null;
+      if (!pending.length) return;
+      const q = pending.map(t => "t=" + encodeURIComponent(t)).join("&");
+      new Image().src = `https://fums.api.bible/f3?${q}&dId=${encodeURIComponent(dId)}&sId=${encodeURIComponent(sId)}`;
+      pending = [];
+    }
+    return {
+      track(tokens) {
+        (tokens || []).forEach(t => { if (!sent.has(t)) { sent.add(t); pending.push(t); } });
+        if (pending.length && !timer) timer = setTimeout(flush, 800);
+      }
+    };
+  })();
+  function reportView(card) {
+    const t = LICENSED[current];
+    if (t && t.fums && card.visible && !card.el.closest(".session.collapsed") && !card.el.closest("body.hide-optional .optional"))
+      FUMS.track(t.fums[card.p.ref]);
+  }
+
+  // ---------- Build page ----------
+  const cards = [];   // { el, p }
+  function cardHTML(p, primary) {
+    return `<article aria-label="Tap to blur or reveal" class="verse-card${primary ? " primary" : ""}" tabindex="0">
+        <div class="card-top"><h3 class="ref">${esc(p.ref)}</h3><span class="ver">KJV</span></div>
+        <p class="text">${verseHTML(p.kjv)}</p>
+        <div class="note" hidden></div>
+        <div class="card-foot"><button class="copy" type="button">Copy</button></div>
+        <div class="hint">Tap to reveal</div>
+      </article>`;
+  }
+  SESSIONS.forEach(s => {
+    const sec = document.createElement("section");
+    sec.className = "session";
+    sec.id = "session-" + s.n;
+    sec.innerHTML = `
+      <h2 class="session-title"><button class="session-head" type="button" aria-expanded="true" aria-controls="body-${s.n}">
+        <span class="session-num">${s.n}</span><span class="session-label">Session ${s.n}</span>
+        <span class="session-ref">${esc(s.main.ref)}</span><span class="line"></span>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button></h2>
+      <div class="session-body" id="body-${s.n}"><div class="session-inner">
+      ${cardHTML(s.main, true)}
+      ${s.optional.length ? `<div class="optional"><div class="optional-label">Optional</div>
+        <div class="optional-grid">${s.optional.map(p => cardHTML(p, false)).join("")}</div></div>` : ""}
+      </div></div>`;
+    $sessions.appendChild(sec);
+    const els = sec.querySelectorAll(".verse-card");
+    [s.main, ...s.optional].forEach((p, i) => { els[i].__p = p; cards.push({ el: els[i], p }); });
+  });
+  document.querySelectorAll(".session-label").forEach(h => h.style.margin = "0");
+
+  // ---------- Online translations (bible-api.com) ----------
+  const memCache = {};
+  const cacheKey = (t, q) => `qns:${t}:${q}`;
+  function getCached(t, q) {
+    const k = cacheKey(t, q);
+    if (memCache[k]) return memCache[k];
+    const s = store.get(k);
+    if (s) { try { return (memCache[k] = JSON.parse(s)); } catch (e) {} }
+    return null;
+  }
+  function setCached(t, q, vs) { const k = cacheKey(t, q); memCache[k] = vs; store.set(k, JSON.stringify(vs)); }
+
+  // The API allows ~15 requests per 30 seconds, so requests are queued and spaced out.
+  const queue = []; const queued = new Set(); let busy = false;
+  function enqueue(t, card) {
+    const k = cacheKey(t, card.p.q);
+    if (queued.has(k)) return;
+    queued.add(k); queue.push({ t, card, k }); pump();
+  }
+  async function pump() {
+    if (busy) return; busy = true;
+    while (queue.length) {
+      // Prefer the translation currently selected; drop stale jobs
+      const i = queue.findIndex(j => j.t === current);
+      if (i < 0) { queue.length = 0; queued.clear(); break; }
+      const job = queue.splice(i, 1)[0];
+      let wait = 2100;
+      try {
+        const res = await fetch(`https://bible-api.com/${encodeURIComponent(job.card.p.q)}?translation=${job.t}`);
+        if (res.status === 429) { queue.unshift(job); wait = 30000; }
+        else {
+          if (!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          const vs = (data.verses || []).map(v => [v.verse, clean(v.text)]);
+          if (!vs.length) throw new Error("empty");
+          setCached(job.t, job.card.p.q, vs);
+          queued.delete(job.k);
+          sameQuery(job.card.p.q).forEach(render);
+        }
+      } catch (e) {
+        queued.delete(job.k);
+        sameQuery(job.card.p.q).forEach(c => { if (current === job.t) showFallback(c); });
+      }
+      await new Promise(r => setTimeout(r, wait));
+    }
+    busy = false;
+  }
+  const sameQuery = q => cards.filter(c => c.p.q === q);
+
+  function showFallback(card) {
+    const $note = card.el.querySelector(".note");
+    card.el.querySelector(".text").classList.remove("loading");
+    $note.textContent = `Couldn't load ${ABBR[current]} right now, so the KJV is shown.`;
+    $note.hidden = false;
+  }
+
+  function setVerses(card, vs, label) {
+    card.verses = vs; card.label = label;
+    card.el.querySelector(".text").innerHTML = verseHTML(vs);
+    card.el.querySelector(".ver").textContent = label;
+  }
+
+  function render(card) {
+    const $text = card.el.querySelector(".text");
+    const $note = card.el.querySelector(".note");
+    $note.hidden = true;
+    $text.classList.remove("loading");
+    if (OFFLINE.includes(current)) {
+      const vs = builtIn(current, card);
+      if (vs) { setVerses(card, vs, ABBR[current]); reportView(card); return; }
+      setVerses(card, card.p.kjv, "KJV");
+      $note.textContent = `${ABBR[current]} isn't available for this passage, so the KJV is shown.`;
+      $note.hidden = false;
+      return;
+    }
+    const hit = getCached(current, card.p.q);
+    if (hit) return setVerses(card, hit, ABBR[current]);
+    setVerses(card, card.p.kjv, "KJV");
+    $text.classList.add("loading");
+    if (card.visible && !card.el.closest("body.hide-optional .optional")) enqueue(current, card);
+  }
+
+  // Only fetch online translations for cards that are on (or near) the screen
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const card = cards.find(c => c.el === e.target);
+      card.visible = e.isIntersecting;
+      if (card.visible && !OFFLINE.includes(current) && !getCached(current, card.p.q)) render(card);
+      if (card.visible) reportView(card);
+    });
+  }, { rootMargin: "300px 0px" });
+  cards.forEach(c => io.observe(c.el));
+
+  function setTranslation(t) {
+    current = ABBR[t] ? t : "kjv";
+    $select.value = current;
+    store.set("qns-translation", current);
+    cards.forEach(render);
+  }
+  $select.addEventListener("change", () => setTranslation($select.value));
+
+  // ---------- Copy & practice reveal ----------
+  $sessions.addEventListener("click", async e => {
+    const card = e.target.closest(".verse-card");
+    if (!card) return;
+    const c = cards.find(x => x.el === card);
+    const btn = e.target.closest(".copy");
+    if (btn) {
+      const body = (c.verses || c.p.kjv).map(v => v[1]).join(" ");
+      try { await navigator.clipboard.writeText(`${body}\n— ${c.p.ref} (${c.label || "KJV"})`); btn.textContent = "Copied"; }
+      catch (err) { btn.textContent = "Copy failed"; }
+      setTimeout(() => (btn.textContent = "Copy"), 1600);
+      return;
+    }
+    if (String(window.getSelection && getSelection()).trim()) return;   // don't blur while selecting text
+    card.classList.toggle("blurred");
+  });
+  $sessions.addEventListener("keydown", e => {
+    const card = e.target.closest(".verse-card");
+    if (card && e.target === card && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault(); card.classList.toggle("blurred");
+    }
+  });
+
+  // ---------- Options ----------
+  const $panel = document.getElementById("panel");
+  const $optionsBtn = document.getElementById("optionsBtn");
+  $optionsBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    const open = !$panel.classList.contains("open");
+    $panel.classList.toggle("open", open);
+    $optionsBtn.setAttribute("aria-expanded", open);
+  });
+  document.addEventListener("click", e => {
+    if (!$panel.contains(e.target) && e.target !== $optionsBtn) { $panel.classList.remove("open"); $optionsBtn.setAttribute("aria-expanded", "false"); }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { $panel.classList.remove("open"); $optionsBtn.setAttribute("aria-expanded", "false"); } });
+
+  function applyOption(name, on) {
+    if (name === "reverse") {
+      const secs = [...$sessions.children].sort((a, b) =>
+        (on ? -1 : 1) * (parseInt(a.id.split("-")[1]) - parseInt(b.id.split("-")[1])));
+      secs.forEach(s => $sessions.appendChild(s));
+    } else {
+      document.body.classList.toggle(name, on);
+    }
+    if (name === "hide-optional" && !on) cards.forEach(c => c.visible && render(c));
+  }
+  document.querySelectorAll("[data-opt]").forEach(input => {
+    const name = input.dataset.opt;
+    input.checked = store.get("qns-opt-" + name) === "1";
+    if (input.checked) applyOption(name, true);
+    input.addEventListener("change", () => { store.set("qns-opt-" + name, input.checked ? "1" : "0"); applyOption(name, input.checked); });
+  });
+
+  const $dark = document.getElementById("darkToggle");
+  $dark.checked = document.documentElement.getAttribute("data-theme") === "dark";
+  $dark.addEventListener("change", () => {
+    const t = $dark.checked ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+    store.set("qns-theme", t);
+  });
+
+  // ---------- Collapsing sessions ----------
+  const $collapseAll = document.getElementById("collapseAll");
+  const sections = [...$sessions.children];
+  let collapsed = new Set();
+  try { collapsed = new Set(JSON.parse(store.get("qns-collapsed") || "[]")); } catch (e) {}
+
+  function setCollapsed(sec, on) {
+    sec.classList.toggle("collapsed", on);
+    sec.querySelector(".session-head").setAttribute("aria-expanded", String(!on));
+    const n = parseInt(sec.id.split("-")[1]);
+    on ? collapsed.add(n) : collapsed.delete(n);
+  }
+  function syncCollapseAll() {
+    const all = sections.every(s => s.classList.contains("collapsed"));
+    $collapseAll.querySelector(".lbl").textContent = all ? "Expand all" : "Collapse all";
+    $collapseAll.querySelector("svg").style.transform = all ? "rotate(180deg)" : "";
+    $collapseAll.setAttribute("aria-pressed", String(all));
+    store.set("qns-collapsed", JSON.stringify([...collapsed]));
+  }
+  sections.forEach(sec => {
+    setCollapsed(sec, collapsed.has(parseInt(sec.id.split("-")[1])));
+    sec.querySelector(".session-head").addEventListener("click", () => {
+      setCollapsed(sec, !sec.classList.contains("collapsed")); syncCollapseAll();
+    });
+  });
+  $collapseAll.addEventListener("click", () => {
+    const collapse = !sections.every(s => s.classList.contains("collapsed"));
+    sections.forEach(s => setCollapsed(s, collapse)); syncCollapseAll();
+  });
+  syncCollapseAll();
+
+  setTranslation(store.get("qns-translation") || "kjv");
+</script>
+</body>
+</html>
