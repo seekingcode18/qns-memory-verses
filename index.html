@@ -178,12 +178,53 @@
   .optional .text { font-size: 1.14rem; }
   body.hide-optional .optional { display: none; }
 
-  /* Tap a card to blur it */
+  /* Tap a card (or one version of it, when comparing) to blur it */
   .verse-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .verse-card.blurred .text { filter: blur(7px); opacity: .55; user-select: none; }
+  .verse-card.blur-0 [data-col="0"], .verse-card.blur-1 [data-col="1"] { filter: blur(7px); opacity: .55; user-select: none; }
   .hint { display: none; position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: .78rem; color: var(--muted); pointer-events: none; }
-  .verse-card.blurred .hint { display: block; }
-  .verse-card.blurred .card-foot { visibility: hidden; }
+  body:not(.comparing) .verse-card.blur-0 .hint { display: block; }
+  body:not(.comparing) .verse-card.blur-0 .card-foot { visibility: hidden; }
+
+  /* Compare control: in the header on wide screens, in the Options panel on small ones */
+  .compare-wrap { display: inline-flex; align-items: center; gap: 8px; }
+  .compare-label { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+  .compare-wrap select { padding-right: 34px; }
+  .compare-wrap::after { right: 13px; }
+  .panel-row { padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .panel-row .compare-wrap { display: flex; justify-content: space-between; width: 100%; }
+  .panel-row .compare-label { font-size: .9rem; color: var(--ink); }
+  .pill { padding: 8px 12px; font-size: .8rem; color: var(--accent); font-weight: 600; }
+  .pill[hidden] { display: none; }
+  @media (min-width: 760px) and (max-width: 980px) { #translation { max-width: 290px; } }
+
+  /* Comparison layout */
+  body.comparing .card-top .ver { display: none; }
+  .copy.both { display: none; margin-left: 8px; }
+  body.comparing .copy.both { display: inline-block; }
+  .col-ver { display: block; font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .cols { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .col + .col { border-top: 1px solid var(--line); padding-top: 16px; }
+  .vgrid .vhead { display: none; }
+  .vrow .cell { display: block; }
+  .vrow + .vrow { margin-top: .75em; }
+  .vrow .cell[data-col="1"] { margin-top: .25em; padding-left: 12px; border-left: 2px solid var(--line); }
+  .vhead + .vrow .cell::before { content: attr(data-label); display: block; font: 600 .62rem var(--sans); letter-spacing: .14em; color: var(--accent); margin-bottom: 2px; }
+  .vrow .cell:empty { display: none; }
+  @media (min-width: 760px) {
+    body.comparing .bar, body.comparing main { max-width: 1120px; }
+    .cols { grid-template-columns: 1fr 1fr; gap: 0 32px; }
+    .col + .col { border-top: 0; padding-top: 0; border-left: 1px solid var(--line); padding-left: 32px; }
+    body.comparing .optional-grid { grid-template-columns: 1fr; }
+    .vgrid .vhead { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+    .vgrid .vhead .col-ver + .col-ver { padding-left: 32px; }
+    .vrow { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+    .vrow .cell[data-col="1"] { margin-top: 0; padding-left: 32px; border-left: 1px solid var(--line); }
+    .vhead + .vrow .cell::before { content: none; }
+    .vrow .cell:empty { display: block; }
+  }
+  @media (max-width: 759px) {
+    body.comparing #translation { max-width: 44vw; }
+  }
 
   footer p { margin: 0 0 12px; }
   footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 0 20px 48px; max-width: 640px; margin: 0 auto; }
@@ -223,11 +264,17 @@
           </optgroup>
         </select>
       </label>
+      <label class="select-wrap compare-wrap" id="compareWrap">
+        <span class="compare-label">Compare</span>
+        <select id="compare" aria-label="Compare with another version"><option value="">Off</option></select>
+      </label>
+      <button class="btn pill" id="comparePill" type="button" hidden aria-label="Comparison settings"></button>
       <button class="btn" id="optionsBtn" aria-expanded="false" aria-controls="panel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
         <span>Options</span>
       </button>
       <div class="panel" id="panel" role="dialog" aria-label="Display options">
+        <div id="panelCompare" hidden><div class="panel-row" id="panelCompareSlot"></div></div>
         <h3>Display</h3>
         <label class="switch"><div>Hide optional verses</div><input type="checkbox" data-opt="hide-optional"></label>
         <label class="switch"><div>Reverse session order<small>Newest session first</small></div><input type="checkbox" data-opt="reverse"></label>
@@ -2794,10 +2841,10 @@
       }
     };
   })();
+  let compare = "";   // second version shown alongside, or "" for none
   function reportView(card) {
-    const t = LICENSED[current];
-    if (t && t.fums && card.visible && !card.el.closest(".session.collapsed") && !card.el.closest("body.hide-optional .optional"))
-      FUMS.track(t.fums[card.p.ref]);
+    if (!card.visible || card.el.closest(".session.collapsed") || card.el.closest("body.hide-optional .optional")) return;
+    [current, compare].forEach(k => { const t = LICENSED[k]; if (t && t.fums) FUMS.track(t.fums[card.p.ref]); });
   }
 
   // ---------- Build page ----------
@@ -2805,9 +2852,9 @@
   function cardHTML(p, primary) {
     return `<article aria-label="Tap to blur or reveal" class="verse-card${primary ? " primary" : ""}" tabindex="0">
         <div class="card-top"><h3 class="ref">${esc(p.ref)}</h3><span class="ver">KJV</span></div>
-        <p class="text">${verseHTML(p.kjv)}</p>
+        <div class="body"><p class="text" data-col="0">${verseHTML(p.kjv)}</p></div>
         <div class="note" hidden></div>
-        <div class="card-foot"><button class="copy" type="button">Copy</button></div>
+        <div class="card-foot"><button class="copy" type="button" data-copy="main">Copy</button><button class="copy both" type="button" data-copy="both">Copy both</button></div>
         <div class="hint">Tap to reveal</div>
       </article>`;
   }
@@ -2844,7 +2891,7 @@
   function setCached(t, q, vs) { const k = cacheKey(t, q); memCache[k] = vs; store.set(k, JSON.stringify(vs)); }
 
   // The API allows ~15 requests per 30 seconds, so requests are queued and spaced out.
-  const queue = []; const queued = new Set(); let busy = false;
+  const queue = []; const queued = new Set(); const failed = new Set(); let busy = false;
   function enqueue(t, card) {
     const k = cacheKey(t, card.p.q);
     if (queued.has(k)) return;
@@ -2853,8 +2900,8 @@
   async function pump() {
     if (busy) return; busy = true;
     while (queue.length) {
-      // Prefer the translation currently selected; drop stale jobs
-      const i = queue.findIndex(j => j.t === current);
+      // Only fetch versions still on screen (main or comparison); drop stale jobs
+      const i = queue.findIndex(j => j.t === current || j.t === compare);
       if (i < 0) { queue.length = 0; queued.clear(); break; }
       const job = queue.splice(i, 1)[0];
       let wait = 2100;
@@ -2871,8 +2918,8 @@
           sameQuery(job.card.p.q).forEach(render);
         }
       } catch (e) {
-        queued.delete(job.k);
-        sameQuery(job.card.p.q).forEach(c => { if (current === job.t) showFallback(c); });
+        queued.delete(job.k); failed.add(job.k);
+        sameQuery(job.card.p.q).forEach(render);
       }
       await new Promise(r => setTimeout(r, wait));
     }
@@ -2880,78 +2927,124 @@
   }
   const sameQuery = q => cards.filter(c => c.p.q === q);
 
-  function showFallback(card) {
-    const $note = card.el.querySelector(".note");
-    card.el.querySelector(".text").classList.remove("loading");
-    $note.textContent = `Couldn't load ${ABBR[current]} right now, so the KJV is shown.`;
-    $note.hidden = false;
-  }
-
-  function setVerses(card, vs, label) {
-    card.verses = vs; card.label = label;
-    card.el.querySelector(".text").innerHTML = verseHTML(vs);
-    card.el.querySelector(".ver").textContent = label;
+  // A version's verses for one card: { vs, label, loading?, note? }
+  function resolve(t, card) {
+    if (OFFLINE.includes(t)) {
+      const vs = builtIn(t, card);
+      return vs ? { vs, label: ABBR[t] }
+                : { vs: card.p.kjv, label: "KJV", note: `${ABBR[t]} isn't available for this passage, so the KJV is shown.` };
+    }
+    const hit = getCached(t, card.p.q);
+    if (hit) return { vs: hit, label: ABBR[t] };
+    if (failed.has(cacheKey(t, card.p.q)))
+      return { vs: card.p.kjv, label: "KJV", note: `Couldn't load ${ABBR[t]} right now, so the KJV is shown.` };
+    if (card.visible && !card.el.closest("body.hide-optional .optional")) enqueue(t, card);
+    return { vs: card.p.kjv, label: "KJV", loading: true };
   }
 
   function render(card) {
-    const $text = card.el.querySelector(".text");
+    const a = resolve(current, card);
+    const b = compare ? resolve(compare, card) : null;
+    card.a = a; card.b = b;
+    const notes = [a.note, b && b.note].filter(Boolean);
     const $note = card.el.querySelector(".note");
-    $note.hidden = true;
-    $text.classList.remove("loading");
-    if (OFFLINE.includes(current)) {
-      const vs = builtIn(current, card);
-      if (vs) { setVerses(card, vs, ABBR[current]); reportView(card); return; }
-      setVerses(card, card.p.kjv, "KJV");
-      $note.textContent = `${ABBR[current]} isn't available for this passage, so the KJV is shown.`;
-      $note.hidden = false;
-      return;
+    $note.textContent = notes.join(" "); $note.hidden = !notes.length;
+    card.el.querySelector(".ver").textContent = a.label;
+    const cls = r => "text" + (r.loading ? " loading" : "");
+    let html;
+    if (!b) {
+      html = `<p class="${cls(a)}" data-col="0">${verseHTML(a.vs)}</p>`;
+    } else if (document.body.classList.contains("verse-lines")) {
+      // Verse-by-verse: side by side on wide screens, interleaved on small ones
+      const ma = new Map(a.vs), mb = new Map(b.vs);
+      const nums = [...new Set([...ma.keys(), ...mb.keys()])].sort((x, y) => x - y);
+      const cell = (m, r, col, n) => `<div class="cell ${cls(r)}" data-col="${col}" data-label="${esc(r.label)}">${m.has(n) ? `<sup>${n}</sup>${esc(m.get(n))}` : ""}</div>`;
+      html = `<div class="vgrid"><div class="vhead"><span class="col-ver">${esc(a.label)}</span><span class="col-ver">${esc(b.label)}</span></div>` +
+        nums.map(n => `<div class="vrow">${cell(ma, a, 0, n)}${cell(mb, b, 1, n)}</div>`).join("") + `</div>`;
+    } else {
+      // Whole passages: two columns on wide screens, stacked on small ones
+      html = `<div class="cols">
+        <div class="col"><span class="col-ver">${esc(a.label)}</span><p class="${cls(a)}" data-col="0">${verseHTML(a.vs)}</p></div>
+        <div class="col"><span class="col-ver">${esc(b.label)}</span><p class="${cls(b)}" data-col="1">${verseHTML(b.vs)}</p></div></div>`;
     }
-    const hit = getCached(current, card.p.q);
-    if (hit) return setVerses(card, hit, ABBR[current]);
-    setVerses(card, card.p.kjv, "KJV");
-    $text.classList.add("loading");
-    if (card.visible && !card.el.closest("body.hide-optional .optional")) enqueue(current, card);
+    card.el.querySelector(".body").innerHTML = html;
+    if (!a.loading && (!b || !b.loading)) reportView(card);
   }
 
   // Only fetch online translations for cards that are on (or near) the screen
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       const card = cards.find(c => c.el === e.target);
+      const was = card.visible;
       card.visible = e.isIntersecting;
-      if (card.visible && !OFFLINE.includes(current) && !getCached(current, card.p.q)) render(card);
-      if (card.visible) reportView(card);
+      if (card.visible && !was && ((card.a && card.a.loading) || (card.b && card.b.loading))) render(card);
+      else if (card.visible) reportView(card);
     });
   }, { rootMargin: "300px 0px" });
   cards.forEach(c => io.observe(c.el));
 
+  // ---------- Version pickers ----------
+  const $compare = document.getElementById("compare");
+  [...$select.options].forEach(o => {
+    const c = document.createElement("option");
+    c.value = o.value; c.textContent = ABBR[o.value] || o.textContent;
+    $compare.appendChild(c);
+  });
+  function syncCompareOptions() {
+    [...$compare.options].forEach(o => { if (o.value) o.disabled = o.hidden = (o.value === current); });
+    $compare.value = compare;
+  }
   function setTranslation(t) {
-    current = ABBR[t] ? t : "kjv";
+    t = ABBR[t] ? t : "kjv";
+    if (t === compare) { compare = current; store.set("qns-compare", compare); }   // swap the two
+    current = t;
     $select.value = current;
     store.set("qns-translation", current);
+    [...failed].forEach(k => k.startsWith(`qns:${current}:`) && failed.delete(k));
+    syncCompareOptions(); updateCompareUI();
+    cards.forEach(render);
+  }
+  function setCompare(t) {
+    compare = (t && ABBR[t] && t !== current) ? t : "";
+    store.set("qns-compare", compare);
+    [...failed].forEach(k => compare && k.startsWith(`qns:${compare}:`) && failed.delete(k));
+    syncCompareOptions(); updateCompareUI();
     cards.forEach(render);
   }
   $select.addEventListener("change", () => setTranslation($select.value));
+  $compare.addEventListener("change", () => setCompare($compare.value));
 
-  // ---------- Copy & practice reveal ----------
+  // ---------- Copy & tap-to-blur ----------
+  function toggleBlur(card, col) {
+    const el = card.el;
+    if (!compare) { el.classList.toggle("blur-0"); return; }
+    if (col != null) { el.classList.toggle("blur-" + col); return; }
+    const any = el.classList.contains("blur-0") || el.classList.contains("blur-1");
+    el.classList.toggle("blur-0", !any); el.classList.toggle("blur-1", !any);
+  }
   $sessions.addEventListener("click", async e => {
-    const card = e.target.closest(".verse-card");
-    if (!card) return;
-    const c = cards.find(x => x.el === card);
+    const el = e.target.closest(".verse-card");
+    if (!el) return;
+    const c = cards.find(x => x.el === el);
     const btn = e.target.closest(".copy");
     if (btn) {
-      const body = (c.verses || c.p.kjv).map(v => v[1]).join(" ");
-      try { await navigator.clipboard.writeText(`${body}\n— ${c.p.ref} (${c.label || "KJV"})`); btn.textContent = "Copied"; }
+      const fmt = r => `${r.vs.map(v => v[1]).join(" ")}\n— ${c.p.ref} (${r.label})`;
+      const a = c.a || { vs: c.p.kjv, label: "KJV" };
+      const text = btn.dataset.copy === "both" && c.b ? `${fmt(a)}\n\n${fmt(c.b)}` : fmt(a);
+      const label = btn.textContent;
+      try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
       catch (err) { btn.textContent = "Copy failed"; }
-      setTimeout(() => (btn.textContent = "Copy"), 1600);
+      setTimeout(() => (btn.textContent = label), 1600);
       return;
     }
     if (String(window.getSelection && getSelection()).trim()) return;   // don't blur while selecting text
-    card.classList.toggle("blurred");
+    const colEl = e.target.closest("[data-col]");
+    toggleBlur(c, colEl ? colEl.dataset.col : null);
   });
   $sessions.addEventListener("keydown", e => {
-    const card = e.target.closest(".verse-card");
-    if (card && e.target === card && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault(); card.classList.toggle("blurred");
+    const el = e.target.closest(".verse-card");
+    if (el && e.target === el && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault(); toggleBlur(cards.find(x => x.el === el), null);
     }
   });
 
@@ -2969,6 +3062,26 @@
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { $panel.classList.remove("open"); $optionsBtn.setAttribute("aria-expanded", "false"); } });
 
+  // The compare dropdown lives in the header on wide screens and in the Options panel on small ones
+  const $compareWrap = document.getElementById("compareWrap");
+  const $comparePill = document.getElementById("comparePill");
+  const $panelCompare = document.getElementById("panelCompare");
+  const wide = matchMedia("(min-width: 760px)");
+  function placeCompare() {
+    if (wide.matches) $optionsBtn.parentNode.insertBefore($compareWrap, $comparePill);
+    else document.getElementById("panelCompareSlot").appendChild($compareWrap);
+    $panelCompare.hidden = wide.matches;
+    updateCompareUI();
+  }
+  function updateCompareUI() {
+    document.body.classList.toggle("comparing", !!compare);
+    $comparePill.textContent = compare ? "+ " + ABBR[compare] : "";
+    $comparePill.hidden = !compare || wide.matches;
+  }
+  $comparePill.addEventListener("click", e => { e.stopPropagation(); $optionsBtn.click(); });
+  wide.addEventListener ? wide.addEventListener("change", placeCompare) : wide.addListener(placeCompare);
+  placeCompare();
+
   function applyOption(name, on) {
     if (name === "reverse") {
       const secs = [...$sessions.children].sort((a, b) =>
@@ -2978,6 +3091,7 @@
       document.body.classList.toggle(name, on);
     }
     if (name === "hide-optional" && !on) cards.forEach(c => c.visible && render(c));
+    if (name === "verse-lines" && compare) cards.forEach(render);
   }
   document.querySelectorAll("[data-opt]").forEach(input => {
     const name = input.dataset.opt;
@@ -3026,6 +3140,7 @@
   syncCollapseAll();
 
   setTranslation(store.get("qns-translation") || DEFAULT_ORDER.find(k => ABBR[k]));
+  setCompare(store.get("qns-compare") || "");
 </script>
 </body>
 </html>
