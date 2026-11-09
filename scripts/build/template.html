@@ -259,6 +259,7 @@
           <optgroup label="Built in · works offline">
             <option value="kjv">King James Version (KJV)</option>
             <option value="bsb">Berean Standard Bible (BSB)</option>
+            <option value="lsb">Legacy Standard Bible (LSB)</option>
           </optgroup>
           <optgroup label="Loads online">
             <option value="darby">Darby Translation</option>
@@ -309,6 +310,10 @@
   <a href="https://bible-api.com" target="_blank" rel="noopener">bible-api.com</a>.
   The KJV, BSB and online translations are in the public domain.</p>
   <div id="licensed-notices"></div>
+  <p><strong>LSB:</strong> Scripture quotations taken from the (LSB®) Legacy Standard Bible®, Copyright © 2021 by
+  The Lockman Foundation. Used by permission. All rights reserved. Managed in partnership with Three Sixteen Publishing Inc.
+  <a href="https://lsbible.org" target="_blank" rel="noopener">LSBible.org</a> and
+  <a href="https://316publishing.com" target="_blank" rel="noopener">316publishing.com</a>.</p>
 </footer>
 
 <!-- Filled in by the GitHub Action at deploy time (scripts/fetch-licensed.mjs). Leave as null here. -->
@@ -318,8 +323,8 @@
   // [verse, text] pairs per translation. Generated from eBible.org.
   const SESSIONS = /*__DATA__*/;
 
-  const OFFLINE = ["kjv", "bsb"];
-  const ABBR = { kjv: "KJV", bsb: "BSB", darby: "Darby", ylt: "YLT" };
+  const OFFLINE = ["kjv", "bsb", "lsb"];
+  const ABBR = { kjv: "KJV", bsb: "BSB", lsb: "LSB", darby: "Darby", ylt: "YLT" };
 
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -359,7 +364,7 @@
   });
   // Order of built-in options; the default is the first of DEFAULT_ORDER that's available
   const DEFAULT_ORDER = ["esv", "csb", "kjv", "bsb"];
-  ["esv", "csb", "nasb", "kjv", "bsb"].forEach(v => {
+  ["esv", "csb", "nasb", "lsb", "kjv", "bsb"].forEach(v => {
     const o = $builtInGroup.querySelector(`option[value="${v}"]`);
     if (o) $builtInGroup.appendChild(o);
   });

@@ -34,6 +34,14 @@ def passage(book, ch, vs):
     return p
 
 data = [{"n": n, "main": passage(*m), "optional": [passage(*o) for o in opts]} for n, m, opts in SESSIONS]
+
+# LSB text (user-supplied, quoted under the LSB permission terms), matched by session and position
+LSB = json.load(open(os.path.join(HERE, 'lsb.json')))
+for s, l in zip(data, LSB):
+    assert s["n"] == l["n"]
+    for p, lp in zip([s["main"]] + s["optional"], l["passages"]):
+        assert [v for v, _ in p["kjv"]] == [v for v, _ in lp["lsb"]], p["ref"]
+        p["lsb"] = lp["lsb"]
 html = open(os.path.join(HERE, 'template.html')).read()
 html = html.replace("/*__DATA__*/", json.dumps(data, ensure_ascii=False, indent=1))
 open(os.path.join(HERE, '..', '..', 'index.html'), 'w').write(html)
