@@ -199,27 +199,29 @@
 
   /* Comparison layout */
   body.comparing .card-top .ver { display: none; }
-  .copy.both { display: none; margin-left: 8px; }
+  .copy.both { display: none; }
   body.comparing .copy.both { display: inline-block; }
-  .col-ver { display: block; font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  body.comparing .copy[data-copy="main"] { display: none; }
+  .col-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; min-height: 24px; }
+  .col-ver { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .copy.mini { padding: 2px 10px; font-size: .7rem; }
   .cols { display: grid; grid-template-columns: 1fr; gap: 16px; }
   .col + .col { border-top: 1px solid var(--line); padding-top: 16px; }
-  .vgrid .vhead { display: none; }
+  .vgrid .vhead { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; margin-bottom: 4px; }
+  .vgrid .vhead .col-head + .col-head { padding-left: 12px; border-left: 2px solid var(--line); }
   .vrow .cell { display: block; }
   .vrow + .vrow { margin-top: .75em; }
   .vrow .cell[data-col="1"] { margin-top: .25em; padding-left: 12px; border-left: 2px solid var(--line); }
-  .vhead + .vrow .cell::before { content: attr(data-label); display: block; font: 600 .62rem var(--sans); letter-spacing: .14em; color: var(--accent); margin-bottom: 2px; }
   .vrow .cell:empty { display: none; }
   @media (min-width: 760px) {
     body.comparing .bar, body.comparing main { max-width: 1120px; }
     .cols { grid-template-columns: 1fr 1fr; gap: 0 32px; }
     .col + .col { border-top: 0; padding-top: 0; border-left: 1px solid var(--line); padding-left: 32px; }
     body.comparing .optional-grid { grid-template-columns: 1fr; }
-    .vgrid .vhead { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
-    .vgrid .vhead .col-ver + .col-ver { padding-left: 32px; }
+    .vgrid .vhead { gap: 0 32px; }
+    .vgrid .vhead .col-head + .col-head { padding-left: 32px; border-left: 1px solid var(--line); }
     .vrow { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
     .vrow .cell[data-col="1"] { margin-top: 0; padding-left: 32px; border-left: 1px solid var(--line); }
-    .vhead + .vrow .cell::before { content: none; }
     .vrow .cell:empty { display: block; }
   }
   @media (max-width: 759px) {
@@ -2951,6 +2953,7 @@
     $note.textContent = notes.join(" "); $note.hidden = !notes.length;
     card.el.querySelector(".ver").textContent = a.label;
     const cls = r => "text" + (r.loading ? " loading" : "");
+    const head = (r, col) => `<div class="col-head"><span class="col-ver">${esc(r.label)}</span><button class="copy mini" type="button" data-copy="${col}" aria-label="Copy ${esc(r.label)}">Copy</button></div>`;
     let html;
     if (!b) {
       html = `<p class="${cls(a)}" data-col="0">${verseHTML(a.vs)}</p>`;
@@ -2959,13 +2962,13 @@
       const ma = new Map(a.vs), mb = new Map(b.vs);
       const nums = [...new Set([...ma.keys(), ...mb.keys()])].sort((x, y) => x - y);
       const cell = (m, r, col, n) => `<div class="cell ${cls(r)}" data-col="${col}" data-label="${esc(r.label)}">${m.has(n) ? `<sup>${n}</sup>${esc(m.get(n))}` : ""}</div>`;
-      html = `<div class="vgrid"><div class="vhead"><span class="col-ver">${esc(a.label)}</span><span class="col-ver">${esc(b.label)}</span></div>` +
+      html = `<div class="vgrid"><div class="vhead">${head(a, 0)}${head(b, 1)}</div>` +
         nums.map(n => `<div class="vrow">${cell(ma, a, 0, n)}${cell(mb, b, 1, n)}</div>`).join("") + `</div>`;
     } else {
       // Whole passages: two columns on wide screens, stacked on small ones
       html = `<div class="cols">
-        <div class="col"><span class="col-ver">${esc(a.label)}</span><p class="${cls(a)}" data-col="0">${verseHTML(a.vs)}</p></div>
-        <div class="col"><span class="col-ver">${esc(b.label)}</span><p class="${cls(b)}" data-col="1">${verseHTML(b.vs)}</p></div></div>`;
+        <div class="col">${head(a, 0)}<p class="${cls(a)}" data-col="0">${verseHTML(a.vs)}</p></div>
+        <div class="col">${head(b, 1)}<p class="${cls(b)}" data-col="1">${verseHTML(b.vs)}</p></div></div>`;
     }
     card.el.querySelector(".body").innerHTML = html;
     if (!a.loading && (!b || !b.loading)) reportView(card);
@@ -3030,7 +3033,8 @@
     if (btn) {
       const fmt = r => `${r.vs.map(v => v[1]).join(" ")}\n— ${c.p.ref} (${r.label})`;
       const a = c.a || { vs: c.p.kjv, label: "KJV" };
-      const text = btn.dataset.copy === "both" && c.b ? `${fmt(a)}\n\n${fmt(c.b)}` : fmt(a);
+      const which = btn.dataset.copy;
+      const text = which === "both" && c.b ? `${fmt(a)}\n\n${fmt(c.b)}` : which === "1" && c.b ? fmt(c.b) : fmt(a);
       const label = btn.textContent;
       try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
       catch (err) { btn.textContent = "Copy failed"; }
