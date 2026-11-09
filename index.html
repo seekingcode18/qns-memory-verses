@@ -3067,7 +3067,13 @@
   const $comparePill = document.getElementById("comparePill");
   const $panelCompare = document.getElementById("panelCompare");
   const wide = matchMedia("(min-width: 760px)");
+  // Full names in the main picker on wide screens, abbreviations (ESV, CSB…) on small ones
+  [...$select.options].forEach(o => { o.dataset.full = o.textContent; });
+  function labelPicker() {
+    [...$select.options].forEach(o => { o.textContent = wide.matches ? o.dataset.full : (ABBR[o.value] || o.dataset.full); });
+  }
   function placeCompare() {
+    labelPicker();
     if (wide.matches) $optionsBtn.parentNode.insertBefore($compareWrap, $comparePill);
     else document.getElementById("panelCompareSlot").appendChild($compareWrap);
     $panelCompare.hidden = wide.matches;
