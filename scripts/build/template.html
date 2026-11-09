@@ -328,6 +328,8 @@
   }
   .p-hint { margin-bottom: 14px; }
   .p-hint .text { color: var(--muted); }
+  .p-hint .v { display: block; }
+  .btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
   .p-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
   .p-actions .btn { padding: 11px 22px; font-size: .92rem; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
@@ -881,7 +883,7 @@
     const mainDone = SESSIONS.filter(s => memorised.has(s.main.ref)).length;
     const optRefs = new Set(SESSIONS.flatMap(s => s.optional.map(p => p.ref)).filter(r => !SESSIONS.some(s => s.main.ref === r)));
     const optDone = [...optRefs].filter(r => memorised.has(r)).length;
-    $progress.innerHTML = `<strong>${mainDone}</strong> of ${SESSIONS.length} memorised` + (optDone ? ` · ${optDone} optional` : "");
+    $progress.innerHTML = `<strong>${mainDone}</strong> of ${SESSIONS.length} primary passages memorised` + (optDone ? ` · ${optDone} optional` : "");
     const n = Practice.items().length;
     $practiseBtn.textContent = n ? `Practise (${n})` : "Practise";
     $practiseBtn.disabled = !n;
@@ -960,7 +962,7 @@
     function start(list) {
       list = list.slice();
       if ($shuffle.checked) for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-      round = { list, i: 0, done: [], skipped: [], hint: false, shown: false };
+      round = { list, i: 0, done: [], skipped: [], hint: false, shown: false, seen: false };
       draw();
     }
     function verses(it) { return resolve(current, Object.assign({}, it.card, { visible: true })); }
@@ -990,11 +992,12 @@
           ${r.note ? `<div class="note">${esc(r.note)}</div>` : r.loading && round.shown ? `<div class="note">Loading ${esc(ABBR[current])}…</div>` : ""}
         </div>
         <div class="p-actions">
-          ${round.shown
-            ? `<button class="btn ghost" data-act="skip">Skip</button><button class="btn primary" data-act="done">Done</button>`
-            : `<button class="btn ghost" data-act="skip">Skip</button><button class="btn" data-act="hint" ${round.hint ? "disabled" : ""}>Hint</button><button class="btn primary" data-act="reveal">Reveal</button>`}
+          <button class="btn ghost" data-act="skip">Skip</button>
+          <button class="btn" data-act="hint" aria-pressed="${round.hint}">${round.hint ? "Hide hint" : "Hint"}</button>
+          <button class="btn${round.seen ? "" : " primary"}" data-act="reveal" aria-pressed="${round.shown}">${round.shown ? "Hide" : "Reveal"}</button>
+          ${round.seen ? `<button class="btn primary" data-act="done">Done</button>` : ""}
         </div>
-        <div class="p-keys">Space: ${round.shown ? "done" : "reveal"} · H: hint · S: skip · Esc: close</div>`;
+        <div class="p-keys">Space: ${round.seen ? "done" : "reveal"} · R: reveal/hide · H: hint · S: skip · Esc: close</div>`;
     }
     function summary() {
       const { done, skipped } = round;
@@ -1010,17 +1013,18 @@
     }
     function act(a) {
       const it = round && round.list[round.i];
-      if (a === "reveal" && it && !round.shown) { round.shown = true; report(it); }
-      else if (a === "hint" && it && !round.shown) { round.hint = true; report(it); }
+      if (a === "reveal" && it) { round.shown = !round.shown; if (round.shown) { round.seen = true; report(it); } }
+      else if (a === "hint" && it) { round.hint = !round.hint; if (round.hint) report(it); }
       else if ((a === "done" || a === "skip") && it) {
         (a === "done" ? round.done : round.skipped).push(it);
-        round.i++; round.hint = false; round.shown = false;
+        round.i++; round.hint = false; round.shown = false; round.seen = false;
       }
       else if (a === "again-skipped") return start(round.skipped);
       else if (a === "again") return start(items());
       else if (a === "close") return close();
       draw();
-      const focusEl = $stage.querySelector(".btn.primary") || $stage.querySelector("#pCard");
+      const focusEl = (b0 => b0 && $stage.querySelector(`[data-act="${b0}"]`))(a === "hint" || a === "reveal" ? a : null)
+        || $stage.querySelector(".btn.primary") || $stage.querySelector("#pCard");
       focusEl && focusEl.focus({ preventScroll: true });
     }
     function open() {
@@ -1036,7 +1040,7 @@
     $stage.addEventListener("click", e => {
       const b = e.target.closest("[data-act]");
       if (b) return act(b.dataset.act);
-      if (e.target.closest("#pCard") && round && !round.shown) act("reveal");
+      if (e.target.closest("#pCard") && round && round.list[round.i]) act("reveal");
     });
     document.getElementById("pClose").addEventListener("click", close);
     $shuffle.addEventListener("change", () => { store.set("qns-p-shuffle", $shuffle.checked ? "1" : "0"); start(items()); });
@@ -1048,7 +1052,8 @@
       const it = round && round.list[round.i];
       if (!it) return;
       const k = e.key.toLowerCase();
-      if (k === " " || k === "enter") { if (e.target.closest && e.target.closest("[data-act]")) return; e.preventDefault(); act(round.shown ? "done" : "reveal"); }
+      if (k === " " || k === "enter") { if (e.target.closest && e.target.closest("[data-act]")) return; e.preventDefault(); act(round.seen ? "done" : "reveal"); }
+      else if (k === "r") act("reveal");
       else if (k === "h") act("hint");
       else if (k === "s" || e.key === "ArrowRight") act("skip");
     });
