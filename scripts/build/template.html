@@ -306,44 +306,79 @@
   /* Practice mode */
   .practice { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .practice[hidden] { display: none; }
-  .p-wrap { max-width: 760px; margin: 0 auto; padding: 14px 20px 40px; min-height: 100%; display: flex; flex-direction: column; }
-  .p-bar { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .p-wrap { max-width: 760px; margin: 0 auto; padding: 14px 20px 0; min-height: 100%; display: flex; flex-direction: column; }
+  .p-bar { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; }
   .p-title { font-family: var(--serif); font-weight: 600; font-size: 1.35rem; }
   .p-count { font-size: .82rem; color: var(--muted); margin-left: auto; }
-  .p-close { width: 38px; height: 38px; padding: 0; justify-content: center; }
-  .p-settings { display: flex; gap: 6px 18px; flex-wrap: wrap; padding: 6px 0 4px; }
-  .p-settings .switch { padding: 8px 4px; gap: 10px; font-size: .85rem; }
-  .p-settings .switch:hover { background: none; }
-  .p-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 18px 0; }
+  .p-icon { width: 38px; height: 38px; padding: 0; justify-content: center; font-weight: 600; }
+  .p-help-wrap { position: relative; }
+  .p-keys {
+    position: absolute; right: 0; top: calc(100% + 8px); width: 250px; z-index: 2;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px 14px; font-size: .84rem;
+  }
+  .p-keys[hidden] { display: none; }
+  .p-keys h3 { margin: 0 0 8px; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .p-keys dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; }
+  .p-keys dt { font: 600 .75rem var(--sans); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; text-align: center; }
+  .p-keys dd { margin: 0; }
+  .p-keys p { margin: 10px 0 0; color: var(--muted); font-size: .78rem; }
+  .p-progress { height: 3px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .p-progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+  .p-stage { flex: 1; display: flex; flex-direction: column; padding: 18px 0 0; }
+  .p-center { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: 24px; }
+
+  .p-setup { text-align: center; }
+  .p-setup h2 { font-family: var(--serif); font-size: 2rem; margin: 0 0 6px; }
+  .p-setup > p { color: var(--muted); margin: 0 0 22px; }
+  .p-setup .opts { display: inline-flex; flex-direction: column; gap: 4px; text-align: left; margin-bottom: 26px; min-width: 260px; }
+  .p-setup .switch { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .p-setup .btn.primary { padding: 13px 40px; font-size: 1rem; }
+
   .p-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow);
-    padding: 30px 32px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 260px;
+    padding: 26px 30px 28px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 280px;
+    transition: transform .18s ease, opacity .18s ease; touch-action: pan-y;
   }
+  .p-card.out-right { transform: translateX(40px); opacity: 0; }
+  .p-card.out-left { transform: translateX(-40px); opacity: 0; }
   .p-meta { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .p-meta .opt { color: var(--accent); }
   .p-ref { font-family: var(--serif); font-weight: 600; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.15; margin: 8px 0 4px; }
-  .p-ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 18px; }
-  .p-hidden {
-    border: 1.5px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; color: var(--muted); font-size: .9rem;
+  .p-ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .p-chips { display: flex; gap: 8px; margin: 16px 0 16px; }
+  .chip {
+    font: 500 .8rem var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s;
   }
-  .p-hint { margin-bottom: 14px; }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .p-hidden { border: 1.5px dashed var(--line); border-radius: 14px; padding: 26px 16px; text-align: center; color: var(--muted); font-size: .9rem; }
+  .p-hint { margin-bottom: 12px; }
   .p-hint .text { color: var(--muted); }
   .p-hint .v { display: block; }
-  .btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-  .p-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
-  .p-actions .btn { padding: 11px 22px; font-size: .92rem; }
+
+  .p-nav {
+    position: sticky; bottom: 0; display: grid; grid-template-columns: auto 1fr 1fr; gap: 10px; align-items: center;
+    padding: 14px 0 calc(16px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 75%, transparent);
+  }
+  .p-nav .btn { justify-content: center; padding: 13px 16px; font-size: .95rem; max-width: none; }
+  .p-nav .p-icon { width: 48px; height: 48px; font-size: 1.1rem; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
   .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+  [data-theme="dark"] .btn.ok { color: #0f1a12; }
+  .btn.ok:hover { filter: brightness(1.05); border-color: var(--ok); }
   .btn.ghost { background: transparent; }
-  .p-keys { text-align: center; font-size: .74rem; color: var(--muted); margin-top: 14px; }
+
   .p-summary { text-align: center; }
   .p-summary h2 { font-family: var(--serif); font-size: 2rem; margin: 0 0 8px; }
-  .p-summary p { color: var(--muted); margin: 0 0 20px; }
+  .p-summary p { color: var(--muted); margin: 0 0 22px; }
+  .p-summary .p-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .p-summary .btn { padding: 11px 22px; }
   .p-empty { text-align: center; color: var(--muted); }
   body.practising { overflow: hidden; }
   @media (max-width: 560px) {
-    .p-card { padding: 22px 20px; min-height: 220px; }
-    .p-keys { display: none; }
+    .p-card { padding: 22px 20px 24px; min-height: 240px; }
   }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -439,12 +474,24 @@
     <div class="p-bar">
       <div class="p-title" id="pTitle">Practice</div>
       <div class="p-count" id="pCount"></div>
-      <button class="btn p-close" id="pClose" type="button" aria-label="Close practice">✕</button>
+      <div class="p-help-wrap">
+        <button class="btn p-icon" id="pHelp" type="button" aria-label="Keyboard shortcuts" aria-expanded="false" aria-controls="pKeys">?</button>
+        <div class="p-keys" id="pKeys" hidden>
+          <h3>Shortcuts</h3>
+          <dl>
+            <dt>Space</dt><dd>Show / hide passage</dd>
+            <dt>H</dt><dd>Show / hide hint</dd>
+            <dt>→</dt><dd>Memorised</dd>
+            <dt>←</dt><dd>Not yet</dd>
+            <dt>B</dt><dd>Back</dd>
+            <dt>Esc</dt><dd>Close</dd>
+          </dl>
+          <p>On a phone, swipe right for Memorised and left for Not yet.</p>
+        </div>
+      </div>
+      <button class="btn p-icon" id="pClose" type="button" aria-label="Close practice">✕</button>
     </div>
-    <div class="p-settings">
-      <label class="switch"><span>Shuffle</span><input type="checkbox" id="pShuffle"></label>
-      <label class="switch"><span>Include optional passages</span><input type="checkbox" id="pOptional"></label>
-    </div>
+    <div class="p-progress" aria-hidden="true"><span id="pBar"></span></div>
     <div class="p-stage" id="pStage"></div>
   </div>
 </div>
@@ -940,18 +987,20 @@
   })();
 
   // ---------- Practice mode ----------
+  // Start screen (settings) → one passage at a time (Hint / Show passage to look; Not yet / Memorised to move on) → summary
   const Practice = (() => {
-    const $el = document.getElementById("practice"), $stage = document.getElementById("pStage"), $count = document.getElementById("pCount");
-    const $shuffle = document.getElementById("pShuffle"), $optional = document.getElementById("pOptional");
-    $shuffle.checked = store.get("qns-p-shuffle") === "1";
-    $optional.checked = store.get("qns-p-optional") === "1";
-    let round = null, lastFocus = null;
+    const $el = document.getElementById("practice"), $stage = document.getElementById("pStage");
+    const $count = document.getElementById("pCount"), $bar = document.getElementById("pBar");
+    const $help = document.getElementById("pHelp"), $keys = document.getElementById("pKeys");
+    let shuffle = store.get("qns-p-shuffle") === "1";
+    let withOptional = store.get("qns-p-optional") === "1";
+    let phase = "setup", round = null, lastFocus = null;
 
     function items() {
       const seen = new Set(), out = [];
       SESSIONS.forEach(s => {
         [[s.main, false], ...s.optional.map(p => [p, true])].forEach(([p, opt]) => {
-          if (opt && !$optional.checked) return;
+          if (opt && !withOptional) return;
           if (!memorised.has(p.ref) || seen.has(p.ref)) return;
           seen.add(p.ref);
           out.push({ ref: p.ref, n: s.n, optional: opt, card: cards.find(c => c.p.ref === p.ref) });
@@ -959,105 +1008,157 @@
       });
       return out;
     }
+    const verses = it => resolve(current, Object.assign({}, it.card, { visible: true }));
+    const report = it => { const t = LICENSED[current]; if (t && t.fums) FUMS.track(t.fums[it.ref]); };
+    const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
+    function setup() {
+      phase = "setup"; round = null;
+      const n = items().length;
+      $count.textContent = ""; $bar.style.width = "0";
+      $stage.innerHTML = `<div class="p-center"><div class="p-setup">
+          <h2>${n ? `${plural(n, "passage")} ready` : "Nothing to practise yet"}</h2>
+          <p>${n ? "Choose how you’d like to practise, then start." : "Passages you mark as memorised appear here."}</p>
+          <div class="opts">
+            <label class="switch"><span>Shuffle</span><input type="checkbox" id="pShuffle" ${shuffle ? "checked" : ""}></label>
+            <label class="switch"><span>Include optional passages</span><input type="checkbox" id="pOptional" ${withOptional ? "checked" : ""}></label>
+          </div>
+          <div>${n ? `<button class="btn primary" data-act="start">Start</button>`
+                   : `<p class="p-empty">Mark passages as memorised to practise them${withOptional ? "" : `, or include optional passages`}.</p>`}</div>
+        </div></div>`;
+      $stage.querySelector("#pShuffle").addEventListener("change", e => { shuffle = e.target.checked; store.set("qns-p-shuffle", shuffle ? "1" : "0"); });
+      $stage.querySelector("#pOptional").addEventListener("change", e => {
+        withOptional = e.target.checked; store.set("qns-p-optional", withOptional ? "1" : "0"); syncMemorised(); setup();
+        const o = $stage.querySelector("#pOptional"); o && o.focus();
+      });
+    }
     function start(list) {
       list = list.slice();
-      if ($shuffle.checked) for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-      round = { list, i: 0, done: [], skipped: [], hint: false, shown: false, seen: false };
+      if (shuffle) for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+      phase = "round";
+      round = { list, i: 0, results: [], hint: false, shown: false };
       draw();
     }
-    function verses(it) { return resolve(current, Object.assign({}, it.card, { visible: true })); }
-    function report(it) { const t = LICENSED[current]; if (t && t.fums) FUMS.track(t.fums[it.ref]); }
     function draw() {
-      if (!round) return;
+      if (phase === "setup") return setup();
+      if (phase === "summary") return summary();
       const { list, i } = round;
-      if (!list.length) {
-        $count.textContent = "";
-        $stage.innerHTML = `<div class="p-empty"><p>Mark passages as memorised to practise them${$optional.checked ? "" : `, or switch on “Include optional passages”`}.</p></div>`;
-        return;
-      }
-      if (i >= list.length) return summary();
+      if (i >= list.length) { phase = "summary"; return summary(); }
       const it = list[i], r = verses(it);
       $count.textContent = `${i + 1} of ${list.length}`;
-      const hint = round.hint && !round.shown
-        ? `<div class="p-hint"><p class="text">${r.vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t.trim().split(/\s+/)[0])}…</span>`).join(" ")}</p></div>` : "";
-      const body = round.shown
-        ? `<p class="text${r.loading ? " loading" : ""}">${verseHTML(r.vs)}</p>`
-        : `${hint}<div class="p-hidden">Tap to reveal</div>`;
+      $bar.style.width = `${(i / list.length) * 100}%`;
+      let body;
+      if (round.shown) body = `<p class="text${r.loading ? " loading" : ""}">${verseHTML(r.vs)}</p>`;
+      else body = (round.hint ? `<div class="p-hint"><p class="text">${r.vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t.trim().split(/\s+/)[0])}…</span>`).join("")}</p></div>` : "")
+                + `<div class="p-hidden">Tap to show the passage</div>`;
       $stage.innerHTML = `
-        <div class="p-card" id="pCard" role="button" tabindex="0" aria-label="${round.shown ? "Passage" : "Reveal passage"}">
-          <div class="p-meta">Session ${it.n}${it.optional ? ` · <span class="opt">Optional</span>` : ""}</div>
-          <h2 class="p-ref">${esc(it.ref)}</h2>
-          <div class="p-ver">${esc(r.loading ? ABBR[current] : r.label)}</div>
-          ${body}
-          ${r.note ? `<div class="note">${esc(r.note)}</div>` : r.loading && round.shown ? `<div class="note">Loading ${esc(ABBR[current])}…</div>` : ""}
+        <div class="p-center">
+          <div class="p-card" id="pCard">
+            <div class="p-meta">Session ${it.n}${it.optional ? ` · <span class="opt">Optional</span>` : ""}</div>
+            <h2 class="p-ref">${esc(it.ref)}</h2>
+            <div class="p-ver">${esc(r.loading ? ABBR[current] : r.label)}</div>
+            <div class="p-chips">
+              <button class="chip" type="button" data-act="hint" aria-pressed="${round.hint}" ${round.shown ? "disabled" : ""}>Hint</button>
+              <button class="chip" type="button" data-act="show" aria-pressed="${round.shown}">Show passage</button>
+            </div>
+            ${body}
+            ${r.note ? `<div class="note">${esc(r.note)}</div>` : r.loading && round.shown ? `<div class="note">Loading ${esc(ABBR[current])}…</div>` : ""}
+          </div>
         </div>
-        <div class="p-actions">
-          <button class="btn ghost" data-act="skip">Skip</button>
-          <button class="btn" data-act="hint" aria-pressed="${round.hint}">${round.hint ? "Hide hint" : "Hint"}</button>
-          <button class="btn${round.seen ? "" : " primary"}" data-act="reveal" aria-pressed="${round.shown}">${round.shown ? "Hide" : "Reveal"}</button>
-          ${round.seen ? `<button class="btn primary" data-act="done">Done</button>` : ""}
-        </div>
-        <div class="p-keys">Space: ${round.seen ? "done" : "reveal"} · R: reveal/hide · H: hint · S: skip · Esc: close</div>`;
+        <div class="p-nav">
+          <button class="btn p-icon" data-act="back" aria-label="Back to previous passage" ${i === 0 ? "disabled" : ""}>←</button>
+          <button class="btn" data-act="notyet">Not yet</button>
+          <button class="btn ok" data-act="memorised">Memorised ✓</button>
+        </div>`;
+      attachSwipe($stage.querySelector("#pCard"));
     }
     function summary() {
-      const { done, skipped } = round;
-      $count.textContent = "";
-      $stage.innerHTML = `<div class="p-summary">
+      const res = round.results.slice(0, round.list.length);
+      const got = res.filter(x => x === "memorised").length;
+      const notYet = round.list.filter((_, k) => res[k] === "notyet");
+      $count.textContent = ""; $bar.style.width = "100%";
+      $stage.innerHTML = `<div class="p-center"><div class="p-summary">
         <h2>Round complete</h2>
-        <p>${done.length} done${skipped.length ? ` · ${skipped.length} skipped` : ""}</p>
+        <p>${got} memorised${notYet.length ? ` · ${notYet.length} not yet` : ""}</p>
         <div class="p-actions">
-          ${skipped.length ? `<button class="btn primary" data-act="again-skipped">Practise the ${skipped.length} skipped</button>` : ""}
-          <button class="btn${skipped.length ? "" : " primary"}" data-act="again">Start again</button>
+          ${notYet.length ? `<button class="btn primary" data-act="again-notyet">Practise the ${notYet.length} again</button>` : ""}
+          <button class="btn${notYet.length ? "" : " primary"}" data-act="restart">Start again</button>
           <button class="btn ghost" data-act="close">Close</button>
-        </div></div>`;
+        </div></div></div>`;
+      round.notYet = notYet;
+    }
+    function next(result, dir) {
+      const card = $stage.querySelector("#pCard");
+      round.results[round.i] = result;
+      round.i++; round.hint = false; round.shown = false;
+      const go = () => { draw(); focusMain(); };
+      if (card && !matchMedia("(prefers-reduced-motion: reduce)").matches) { card.classList.add(dir); setTimeout(go, 160); } else go();
+    }
+    function focusMain() {
+      const f = $stage.querySelector('[data-act="memorised"]') || $stage.querySelector(".btn.primary");
+      f && f.focus({ preventScroll: true });
     }
     function act(a) {
       const it = round && round.list[round.i];
-      if (a === "reveal" && it) { round.shown = !round.shown; if (round.shown) { round.seen = true; report(it); } }
-      else if (a === "hint" && it) { round.hint = !round.hint; if (round.hint) report(it); }
-      else if ((a === "done" || a === "skip") && it) {
-        (a === "done" ? round.done : round.skipped).push(it);
-        round.i++; round.hint = false; round.shown = false; round.seen = false;
-      }
-      else if (a === "again-skipped") return start(round.skipped);
-      else if (a === "again") return start(items());
-      else if (a === "close") return close();
-      draw();
-      const focusEl = (b0 => b0 && $stage.querySelector(`[data-act="${b0}"]`))(a === "hint" || a === "reveal" ? a : null)
-        || $stage.querySelector(".btn.primary") || $stage.querySelector("#pCard");
-      focusEl && focusEl.focus({ preventScroll: true });
+      if (a === "start") { start(items()); return focusMain(); }
+      if (a === "restart") return setup();
+      if (a === "again-notyet") { start(round.notYet); return focusMain(); }
+      if (a === "close") return close();
+      if (!it || phase !== "round") return;
+      if (a === "show") { round.shown = !round.shown; if (round.shown) report(it); draw(); $stage.querySelector('[data-act="show"]').focus({ preventScroll: true }); }
+      else if (a === "hint" && !round.shown) { round.hint = !round.hint; if (round.hint) report(it); draw(); $stage.querySelector('[data-act="hint"]').focus({ preventScroll: true }); }
+      else if (a === "memorised") next("memorised", "out-right");
+      else if (a === "notyet") next("notyet", "out-left");
+      else if (a === "back" && round.i > 0) { round.i--; round.results.length = round.i; round.hint = false; round.shown = false; draw(); focusMain(); }
+    }
+    function attachSwipe(el) {
+      if (!el) return;
+      let x0 = null, y0 = null;
+      el.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+      el.addEventListener("touchend", e => {
+        if (x0 === null) return;
+        const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+        x0 = null;
+        if (Math.abs(dx) > 70 && Math.abs(dy) < 60) { el.dataset.swiped = "1"; act(dx > 0 ? "memorised" : "notyet"); }
+      });
     }
     function open() {
       lastFocus = document.activeElement;
       $el.hidden = false; document.body.classList.add("practising");
-      start(items());
-      document.getElementById("pClose").focus();
+      setup();
+      const s = $stage.querySelector('[data-act="start"]'); (s || document.getElementById("pClose")).focus();
     }
     function close() {
-      $el.hidden = true; document.body.classList.remove("practising"); round = null;
+      $el.hidden = true; document.body.classList.remove("practising"); round = null; phase = "setup";
+      toggleKeys(false);
       lastFocus && lastFocus.focus && lastFocus.focus();
     }
+    function toggleKeys(on) {
+      on = on ?? $keys.hidden;
+      $keys.hidden = !on; $help.setAttribute("aria-expanded", String(on));
+    }
+    $help.addEventListener("click", e => { e.stopPropagation(); toggleKeys(); });
+    $el.addEventListener("click", e => { if (!$keys.hidden && !e.target.closest(".p-help-wrap")) toggleKeys(false); });
     $stage.addEventListener("click", e => {
       const b = e.target.closest("[data-act]");
       if (b) return act(b.dataset.act);
-      if (e.target.closest("#pCard") && round && round.list[round.i]) act("reveal");
+      const card = e.target.closest("#pCard");
+      if (card && !card.dataset.swiped && !String(getSelection()).trim()) act("show");
     });
     document.getElementById("pClose").addEventListener("click", close);
-    $shuffle.addEventListener("change", () => { store.set("qns-p-shuffle", $shuffle.checked ? "1" : "0"); start(items()); });
-    $optional.addEventListener("change", () => { store.set("qns-p-optional", $optional.checked ? "1" : "0"); start(items()); syncMemorised(); });
     document.addEventListener("keydown", e => {
       if ($el.hidden) return;
-      if (e.key === "Escape") { e.preventDefault(); return close(); }
-      if (e.target.closest && e.target.closest(".p-settings")) return;
-      const it = round && round.list[round.i];
-      if (!it) return;
+      if (e.key === "Escape") { e.preventDefault(); return $keys.hidden ? close() : toggleKeys(false); }
+      if (e.key === "?") { e.preventDefault(); return toggleKeys(); }
+      if (phase !== "round" || e.target.matches("input")) return;
       const k = e.key.toLowerCase();
-      if (k === " " || k === "enter") { if (e.target.closest && e.target.closest("[data-act]")) return; e.preventDefault(); act(round.seen ? "done" : "reveal"); }
-      else if (k === "r") act("reveal");
+      if (k === " ") { e.preventDefault(); act("show"); }
       else if (k === "h") act("hint");
-      else if (k === "s" || e.key === "ArrowRight") act("skip");
+      else if (e.key === "ArrowRight") { e.preventDefault(); act("memorised"); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); act("notyet"); }
+      else if (k === "b" || e.key === "Backspace") { e.preventDefault(); act("back"); }
     });
-    return { open, items, refresh: () => { if (!$el.hidden) draw(); } };
+    return { open, items, refresh: () => { if (!$el.hidden && phase === "round") draw(); } };
   })();
   $practiseBtn.addEventListener("click", () => Practice.open());
   syncMemorised();
