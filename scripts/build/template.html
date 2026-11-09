@@ -296,7 +296,7 @@
     OFFLINE.push(key); ABBR[key] = t.abbr;
     const o = document.createElement("option");
     o.value = key; o.textContent = `${t.name} (${t.abbr})`;
-    $builtInGroup.appendChild(o);
+    $builtInGroup.appendChild(o);   // re-ordered below
     const p = document.createElement("p");
     const b = document.createElement("strong"); b.textContent = t.abbr + ": ";
     p.append(b, t.notice + " ");
@@ -307,6 +307,12 @@
       p.append(a);
     });
     $notices.appendChild(p);
+  });
+  // Order of built-in options; the default is the first of DEFAULT_ORDER that's available
+  const DEFAULT_ORDER = ["esv", "csb", "kjv", "bsb"];
+  ["esv", "csb", "nasb", "kjv", "bsb"].forEach(v => {
+    const o = $builtInGroup.querySelector(`option[value="${v}"]`);
+    if (o) $builtInGroup.appendChild(o);
   });
   const builtIn = (t, card) => LICENSED[t] ? LICENSED[t].passages[card.p.ref] : card.p[t];
 
@@ -562,7 +568,7 @@
   });
   syncCollapseAll();
 
-  setTranslation(store.get("qns-translation") || "kjv");
+  setTranslation(store.get("qns-translation") || DEFAULT_ORDER.find(k => ABBR[k]));
 </script>
 </body>
 </html>
