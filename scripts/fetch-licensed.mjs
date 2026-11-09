@@ -248,7 +248,8 @@ function pickNASB(bibles) {
 async function apiBible(bible, refs) {
   const info = await getJSON(`${ABS_API}/bibles/${bible.id}`, absHeaders(), "API.Bible info").catch(() => ({ data: bible }));
   const meta = info.data || bible;
-  const abbr = (meta.abbreviationLocal || meta.abbreviation || "").replace(/\s+/g, "") || bible.id;
+  let abbr = (meta.abbreviationLocal || meta.abbreviation || "").replace(/\s+/g, "") || bible.id;
+  if (/^NASB/i.test(abbr) && /1995/.test(`${abbr} ${meta.name || ""} ${meta.description || ""}`)) abbr = "NASB95";
   const passages = {};
   const fums = {};
   let copyright = meta.copyright || "";

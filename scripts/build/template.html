@@ -24,6 +24,8 @@
     --accent: #9a6b3c; --accent-soft: #f1e6d8; --on-accent: #fff;
     --shadow: 0 1px 2px rgba(40,30,20,.04), 0 8px 24px rgba(40,30,20,.06);
     --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --ok: #2f7d4f; --ok-soft: #e3f1e8;
+    --fs: 1;
     --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     color-scheme: light;
   }
@@ -31,6 +33,7 @@
     --bg: #141210; --bg-2: #1b1815; --card: #1f1c19; --card-2: #1a1815;
     --ink: #efe8dd; --muted: #a69d90; --line: #322d27;
     --accent: #d4a373; --accent-soft: #2d241b; --on-accent: #1a1510;
+    --ok: #6fcf97; --ok-soft: #1c2e23;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     color-scheme: dark;
   }
@@ -99,12 +102,19 @@
   .hero { max-width: 880px; margin: 0 auto; padding: 60px 20px 18px; text-align: center; }
   .eyebrow { font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
   h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2.6rem, 7vw, 4rem); line-height: 1.05; margin: 12px 0 14px; letter-spacing: -.01em; }
-  .sub { color: var(--muted); margin: 0 auto; max-width: 520px; }
+  .sub { color: var(--muted); margin: 0 auto; max-width: 520px; text-wrap: balance; }
+  h1 { text-wrap: balance; }
   .rule { width: 56px; height: 1px; background: var(--accent); margin: 26px auto 0; opacity: .6; }
 
   /* Sessions */
   main { max-width: 880px; margin: 0 auto; padding: 16px 20px 80px; }
-  .toolbar { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .toolbar-right { display: flex; gap: 8px; margin-left: auto; }
+  .progress { font-size: .82rem; color: var(--muted); }
+  .progress strong { color: var(--ok); font-weight: 600; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:disabled:hover { border-color: var(--line); }
+  .btn.small.accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
   .btn.small { padding: 7px 14px; font-size: .8rem; color: var(--muted); }
   .btn.small:hover { color: var(--accent); }
   .btn.small svg { width: 14px; height: 14px; transition: transform .3s; }
@@ -155,7 +165,7 @@
   .ref { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; margin: 0; line-height: 1.2; }
   .ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
 
-  .text { font-family: var(--serif); font-size: 1.32rem; line-height: 1.6; margin: 0; transition: filter .3s ease, opacity .3s ease; }
+  .text { font-family: var(--serif); font-size: calc(1.32rem * var(--fs)); line-height: 1.6; margin: 0; transition: filter .3s ease, opacity .3s ease; }
   .text sup { font-family: var(--sans); font-size: .6rem; font-weight: 600; color: var(--accent); margin-right: 3px; vertical-align: .55em; line-height: 0; }
   .text.loading { opacity: .4; }
   body.verse-lines .text .v { display: block; }
@@ -175,7 +185,7 @@
   .optional-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
   .optional .verse-card { background: var(--card-2); box-shadow: none; padding: 22px 24px 18px; border-radius: 16px; }
   .optional .ref { font-size: 1.25rem; }
-  .optional .text { font-size: 1.14rem; }
+  .optional .text { font-size: calc(1.14rem * var(--fs)); }
   body.hide-optional .optional { display: none; }
 
   /* Tap a card (or one version of it, when comparing) to blur it */
@@ -199,8 +209,6 @@
 
   /* Comparison layout */
   body.comparing .card-top .ver { display: none; }
-  .copy.both { display: none; }
-  body.comparing .copy.both { display: inline-block; }
   body.comparing .copy[data-copy="main"] { display: none; }
   .col-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; min-height: 24px; }
   .col-ver { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
@@ -235,15 +243,107 @@
   @media (max-width: 560px) {
     .bar { padding: 10px 14px; }
     .verse-card { padding: 22px 22px 18px; border-radius: 16px; }
-    .text { font-size: 1.2rem; }
+    .text { font-size: calc(1.2rem * var(--fs)); }
     .ref { font-size: 1.4rem; }
     .optional-grid { grid-template-columns: 1fr; }
     .hero { padding-top: 40px; }
     .bar .btn span { display: none; }
+    .brand { font-size: 1.12rem; }
     .session.collapsed .session-label { display: none; }
     .session.collapsed .session-ref { max-width: 72vw; }
     .panel { width: min(290px, calc(100vw - 28px)); }
   }
+  /* Sans-serif option for verse text and references */
+  body.sans .text, body.sans .ref, body.sans .session-ref, body.sans .p-ref { font-family: var(--sans); }
+  body.sans .text { font-size: calc(1.1rem * var(--fs)); line-height: 1.65; }
+  body.sans .optional .text { font-size: calc(.98rem * var(--fs)); }
+  body.sans .ref { font-size: 1.3rem; }
+  body.sans .optional .ref { font-size: 1.1rem; }
+  body.sans .text sup { font-size: .62rem; }
+
+  /* Text tools: in the header on large screens, in the Options panel otherwise */
+  .font-tools { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--card); overflow: hidden; }
+  .font-tools button {
+    font: 600 .8rem var(--sans); color: var(--ink); background: none; border: 0; padding: 9px 12px; cursor: pointer; line-height: 1;
+  }
+  .font-tools button + button { border-left: 1px solid var(--line); }
+  .font-tools button:hover:not(:disabled) { color: var(--accent); }
+  .font-tools button:disabled { opacity: .35; cursor: default; }
+  .font-tools button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+  #fontToggle { font-family: var(--sans); font-size: .9rem; }
+  body.sans #fontToggle { font-family: var(--serif); font-size: 1.05rem; }
+  .panel-row.text-row { display: flex; align-items: center; justify-content: space-between; font-size: .9rem; }
+  .panel-row.text-row small { display: block; color: var(--muted); font-size: .76rem; }
+  @media (min-width: 1024px) { .bar { max-width: 1120px; } }
+
+  /* Memorised */
+  .card-foot { justify-content: space-between; align-items: center; gap: 8px; }
+  .mem {
+    font: 500 .76rem var(--sans); color: var(--muted); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px; cursor: pointer; transition: color .15s, border-color .15s, background-color .15s;
+  }
+  .mem:hover { color: var(--ok); border-color: var(--ok); }
+  .verse-card.memorised .mem { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 55%, transparent); font-weight: 600; }
+  .tick {
+    display: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: #fff;
+    font: 700 .68rem/20px var(--sans); text-align: center; margin-left: 9px; vertical-align: 3px;
+  }
+  [data-theme="dark"] .tick { color: #10180f; }
+  .verse-card.memorised .tick, .session.main-memorised .sess-tick { display: inline-block; }
+  .sess-tick { margin-left: 0; flex: none; }
+  :is(.mem, .practice button):focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+  /* Toast (progress link, incoming progress) */
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 60; width: min(520px, calc(100vw - 28px));
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 14px 16px; font-size: .9rem; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .toast[hidden] { display: none; }
+  .toast .grow { flex: 1 1 200px; }
+  .toast .actions { display: flex; gap: 8px; margin-left: auto; }
+
+  /* Practice mode */
+  .practice { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .practice[hidden] { display: none; }
+  .p-wrap { max-width: 760px; margin: 0 auto; padding: 14px 20px 40px; min-height: 100%; display: flex; flex-direction: column; }
+  .p-bar { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .p-title { font-family: var(--serif); font-weight: 600; font-size: 1.35rem; }
+  .p-count { font-size: .82rem; color: var(--muted); margin-left: auto; }
+  .p-close { width: 38px; height: 38px; padding: 0; justify-content: center; }
+  .p-settings { display: flex; gap: 6px 18px; flex-wrap: wrap; padding: 6px 0 4px; }
+  .p-settings .switch { padding: 8px 4px; gap: 10px; font-size: .85rem; }
+  .p-settings .switch:hover { background: none; }
+  .p-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 18px 0; }
+  .p-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow);
+    padding: 30px 32px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 260px;
+  }
+  .p-meta { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .p-meta .opt { color: var(--accent); }
+  .p-ref { font-family: var(--serif); font-weight: 600; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.15; margin: 8px 0 4px; }
+  .p-ver { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 18px; }
+  .p-hidden {
+    border: 1.5px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; color: var(--muted); font-size: .9rem;
+  }
+  .p-hint { margin-bottom: 14px; }
+  .p-hint .text { color: var(--muted); }
+  .p-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .p-actions .btn { padding: 11px 22px; font-size: .92rem; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ghost { background: transparent; }
+  .p-keys { text-align: center; font-size: .74rem; color: var(--muted); margin-top: 14px; }
+  .p-summary { text-align: center; }
+  .p-summary h2 { font-family: var(--serif); font-size: 2rem; margin: 0 0 8px; }
+  .p-summary p { color: var(--muted); margin: 0 0 20px; }
+  .p-empty { text-align: center; color: var(--muted); }
+  body.practising { overflow: hidden; }
+  @media (max-width: 560px) {
+    .p-card { padding: 22px 20px; min-height: 220px; }
+    .p-keys { display: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -251,7 +351,7 @@
 
 <header>
   <div class="bar">
-    <div class="brand">QNS</div>
+    <div class="brand">Memorisation</div>
     <div class="controls">
       <label class="select-wrap">
         <span class="sr">Translation</span>
@@ -269,9 +369,14 @@
       </label>
       <label class="select-wrap compare-wrap" id="compareWrap">
         <span class="compare-label">Compare</span>
-        <select id="compare" aria-label="Compare with another version"><option value="">Off</option></select>
+        <select id="compare" aria-label="Compare with another version"><option value="">—</option></select>
       </label>
       <button class="btn pill" id="comparePill" type="button" hidden aria-label="Comparison settings"></button>
+      <div class="font-tools" id="fontTools" role="group" aria-label="Text style and size">
+        <button type="button" id="fontToggle" aria-pressed="false" title="Switch font style" aria-label="Switch font style">Aa</button>
+        <button type="button" id="fontDown" title="Smaller text" aria-label="Smaller text">A−</button>
+        <button type="button" id="fontUp" title="Larger text" aria-label="Larger text">A+</button>
+      </div>
       <button class="btn" id="optionsBtn" aria-expanded="false" aria-controls="panel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
         <span>Options</span>
@@ -283,6 +388,12 @@
         <label class="switch"><div>Reverse session order<small>Newest session first</small></div><input type="checkbox" data-opt="reverse"></label>
         <label class="switch"><div>Dark mode</div><input type="checkbox" id="darkToggle"></label>
         <label class="switch"><div>Each verse on a new line</div><input type="checkbox" data-opt="verse-lines"></label>
+        <div id="panelText" hidden><h3>Text</h3><div class="panel-row text-row"><div>Style &amp; size<small>Aa switches font style</small></div><div id="panelTextSlot"></div></div></div>
+        <h3>Progress</h3>
+        <div class="panel-row" style="border:0">
+          <button class="btn small" id="shareProgress" type="button" style="width:100%;justify-content:center">Copy my progress link</button>
+          <small style="display:block;color:var(--muted);font-size:.76rem;margin-top:6px">Open the link on another device to bring your memorised passages with you.</small>
+        </div>
       </div>
     </div>
   </div>
@@ -291,16 +402,20 @@
 <section class="hero">
   <div class="eyebrow">Hide God's word in your heart</div>
   <h1>QNS Memory Verses</h1>
-  <p class="sub">Choose a translation above. Tap any verse to blur it and test yourself.</p>
+  <p class="sub">Choose a translation above. Tap any verse to blur it and test&nbsp;yourself.</p>
   <div class="rule"></div>
 </section>
 
 <main>
   <div class="toolbar">
+    <span class="progress" id="progress"></span>
+    <div class="toolbar-right">
+    <button class="btn small accent" id="practiseBtn" type="button">Practise</button>
     <button class="btn small" id="collapseAll" type="button" aria-pressed="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5-5 5 5"/></svg>
       <span class="lbl">Collapse all</span>
     </button>
+    </div>
   </div>
   <div id="sessions"></div>
 </main>
@@ -309,12 +424,30 @@
   <p>Built-in translations work offline. Others load from
   <a href="https://bible-api.com" target="_blank" rel="noopener">bible-api.com</a>.
   The KJV, BSB and online translations are in the public domain.</p>
+  <p>Some versions are updated weekly from their publishers. If one is missing from the list, it should be back within a few days.</p>
   <div id="licensed-notices"></div>
   <p><strong>LSB:</strong> Scripture quotations taken from the (LSB®) Legacy Standard Bible®, Copyright © 2021 by
   The Lockman Foundation. Used by permission. All rights reserved. Managed in partnership with Three Sixteen Publishing Inc.
   <a href="https://lsbible.org" target="_blank" rel="noopener">LSBible.org</a> and
   <a href="https://316publishing.com" target="_blank" rel="noopener">316publishing.com</a>.</p>
 </footer>
+
+<div class="practice" id="practice" role="dialog" aria-modal="true" aria-labelledby="pTitle" hidden>
+  <div class="p-wrap">
+    <div class="p-bar">
+      <div class="p-title" id="pTitle">Practice</div>
+      <div class="p-count" id="pCount"></div>
+      <button class="btn p-close" id="pClose" type="button" aria-label="Close practice">✕</button>
+    </div>
+    <div class="p-settings">
+      <label class="switch"><span>Shuffle</span><input type="checkbox" id="pShuffle"></label>
+      <label class="switch"><span>Include optional passages</span><input type="checkbox" id="pOptional"></label>
+    </div>
+    <div class="p-stage" id="pStage"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
 
 <!-- Filled in by the GitHub Action at deploy time (scripts/fetch-licensed.mjs). Leave as null here. -->
 <script id="licensed-data" type="application/json">null</script>
@@ -347,6 +480,7 @@
   ["esv", "csb", "nasb"].forEach(key => {
     const t = LICENSED[key];
     if (!t || !t.passages) return;
+    if (key === "nasb" && /1995/.test(`${t.abbr} ${t.name}`)) t.abbr = "NASB95";
     OFFLINE.push(key); ABBR[key] = t.abbr;
     const o = document.createElement("option");
     o.value = key; o.textContent = `${t.name} (${t.abbr})`;
@@ -364,7 +498,7 @@
   });
   // Order of built-in options; the default is the first of DEFAULT_ORDER that's available
   const DEFAULT_ORDER = ["esv", "csb", "kjv", "bsb"];
-  ["esv", "csb", "nasb", "lsb", "kjv", "bsb"].forEach(v => {
+  ["esv", "csb", "lsb", "nasb", "kjv", "bsb"].forEach(v => {
     const o = $builtInGroup.querySelector(`option[value="${v}"]`);
     if (o) $builtInGroup.appendChild(o);
   });
@@ -401,10 +535,10 @@
   const cards = [];   // { el, p }
   function cardHTML(p, primary) {
     return `<article aria-label="Tap to blur or reveal" class="verse-card${primary ? " primary" : ""}" tabindex="0">
-        <div class="card-top"><h3 class="ref">${esc(p.ref)}</h3><span class="ver">KJV</span></div>
+        <div class="card-top"><h3 class="ref">${esc(p.ref)}<span class="tick" title="Memorised" aria-label="Memorised">✓</span></h3><span class="ver">KJV</span></div>
         <div class="body"><p class="text" data-col="0">${verseHTML(p.kjv)}</p></div>
         <div class="note" hidden></div>
-        <div class="card-foot"><button class="copy" type="button" data-copy="main">Copy</button><button class="copy both" type="button" data-copy="both">Copy both</button></div>
+        <div class="card-foot"><button class="mem" type="button" aria-pressed="false">Mark memorised</button><button class="copy" type="button" data-copy="main">Copy</button></div>
         <div class="hint">Tap to reveal</div>
       </article>`;
   }
@@ -415,7 +549,7 @@
     sec.innerHTML = `
       <h2 class="session-title"><button class="session-head" type="button" aria-expanded="true" aria-controls="body-${s.n}">
         <span class="session-num">${s.n}</span><span class="session-label">Session ${s.n}</span>
-        <span class="session-ref">${esc(s.main.ref)}</span><span class="line"></span>
+        <span class="session-ref">${esc(s.main.ref)}</span><span class="tick sess-tick" aria-label="Memorised">✓</span><span class="line"></span>
         <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
       </button></h2>
       <div class="session-body" id="body-${s.n}"><div class="session-inner">
@@ -466,10 +600,12 @@
           setCached(job.t, job.card.p.q, vs);
           queued.delete(job.k);
           sameQuery(job.card.p.q).forEach(render);
+          if (typeof Practice !== "undefined") Practice.refresh();
         }
       } catch (e) {
         queued.delete(job.k); failed.add(job.k);
         sameQuery(job.card.p.q).forEach(render);
+        if (typeof Practice !== "undefined") Practice.refresh();
       }
       await new Promise(r => setTimeout(r, wait));
     }
@@ -577,12 +713,12 @@
     const el = e.target.closest(".verse-card");
     if (!el) return;
     const c = cards.find(x => x.el === el);
+    if (e.target.closest(".mem")) { toggleMemorised(c.p.ref); return; }
     const btn = e.target.closest(".copy");
     if (btn) {
       const fmt = r => `${r.vs.map(v => v[1]).join(" ")}\n— ${c.p.ref} (${r.label})`;
       const a = c.a || { vs: c.p.kjv, label: "KJV" };
-      const which = btn.dataset.copy;
-      const text = which === "both" && c.b ? `${fmt(a)}\n\n${fmt(c.b)}` : which === "1" && c.b ? fmt(c.b) : fmt(a);
+      const text = btn.dataset.copy === "1" && c.b ? fmt(c.b) : fmt(a);
       const label = btn.textContent;
       try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
       catch (err) { btn.textContent = "Copy failed"; }
@@ -631,6 +767,36 @@
     $panelCompare.hidden = wide.matches;
     updateCompareUI();
   }
+  // Text tools: in the header on large screens (1024px+), in the Options panel below that
+  const large = matchMedia("(min-width: 1024px)");
+  const $fontTools = document.getElementById("fontTools");
+  function placeFontTools() {
+    if (large.matches) $optionsBtn.parentNode.insertBefore($fontTools, $optionsBtn);
+    else document.getElementById("panelTextSlot").appendChild($fontTools);
+    document.getElementById("panelText").hidden = large.matches;
+  }
+  large.addEventListener ? large.addEventListener("change", placeFontTools) : large.addListener(placeFontTools);
+  placeFontTools();
+
+  const SIZES = [0.85, 0.92, 1, 1.1, 1.2, 1.32, 1.45];
+  let sizeIdx = Math.min(SIZES.length - 1, Math.max(0, parseInt(store.get("qns-size") ?? "2", 10) || 0));
+  if (store.get("qns-size") === null) sizeIdx = 2;
+  const $fontUp = document.getElementById("fontUp"), $fontDown = document.getElementById("fontDown"), $fontToggle = document.getElementById("fontToggle");
+  function applySize() {
+    document.documentElement.style.setProperty("--fs", SIZES[sizeIdx]);
+    $fontDown.disabled = sizeIdx === 0; $fontUp.disabled = sizeIdx === SIZES.length - 1;
+    store.set("qns-size", String(sizeIdx));
+  }
+  $fontUp.addEventListener("click", e => { e.stopPropagation(); if (sizeIdx < SIZES.length - 1) { sizeIdx++; applySize(); } });
+  $fontDown.addEventListener("click", e => { e.stopPropagation(); if (sizeIdx > 0) { sizeIdx--; applySize(); } });
+  function applyFont(sans) {
+    document.body.classList.toggle("sans", sans);
+    $fontToggle.setAttribute("aria-pressed", String(sans));
+    store.set("qns-sans", sans ? "1" : "0");
+  }
+  $fontToggle.addEventListener("click", e => { e.stopPropagation(); applyFont(!document.body.classList.contains("sans")); });
+  applySize(); applyFont(store.get("qns-sans") === "1");
+
   function updateCompareUI() {
     document.body.classList.toggle("comparing", !!compare);
     $comparePill.textContent = compare ? "+ " + ABBR[compare] : "";
@@ -696,6 +862,200 @@
     sections.forEach(s => setCollapsed(s, collapse)); syncCollapseAll();
   });
   syncCollapseAll();
+
+  // ---------- Memorised (per passage, across all versions; saved in this browser) ----------
+  let memorised = new Set();
+  try { memorised = new Set(JSON.parse(store.get("qns-memorised") || "[]")); } catch (e) {}
+  const $progress = document.getElementById("progress");
+  const $practiseBtn = document.getElementById("practiseBtn");
+  function syncMemorised() {
+    store.set("qns-memorised", JSON.stringify([...memorised]));
+    cards.forEach(c => {
+      const on = memorised.has(c.p.ref);
+      c.el.classList.toggle("memorised", on);
+      const b = c.el.querySelector(".mem");
+      b.textContent = on ? "✓ Memorised" : "Mark memorised";
+      b.setAttribute("aria-pressed", String(on));
+    });
+    SESSIONS.forEach(s => document.getElementById("session-" + s.n).classList.toggle("main-memorised", memorised.has(s.main.ref)));
+    const mainDone = SESSIONS.filter(s => memorised.has(s.main.ref)).length;
+    const optRefs = new Set(SESSIONS.flatMap(s => s.optional.map(p => p.ref)).filter(r => !SESSIONS.some(s => s.main.ref === r)));
+    const optDone = [...optRefs].filter(r => memorised.has(r)).length;
+    $progress.innerHTML = `<strong>${mainDone}</strong> of ${SESSIONS.length} memorised` + (optDone ? ` · ${optDone} optional` : "");
+    const n = Practice.items().length;
+    $practiseBtn.textContent = n ? `Practise (${n})` : "Practise";
+    $practiseBtn.disabled = !n;
+    $practiseBtn.title = n ? "" : "Mark passages as memorised to practise them";
+  }
+  function toggleMemorised(ref) {
+    memorised.has(ref) ? memorised.delete(ref) : memorised.add(ref);
+    syncMemorised();
+  }
+
+  // ---------- Toast ----------
+  const $toast = document.getElementById("toast");
+  let toastTimer = null;
+  function toast(html, actions = [], ms = 0) {
+    clearTimeout(toastTimer);
+    $toast.innerHTML = `<div class="grow">${html}</div>` + (actions.length ? `<div class="actions"></div>` : "");
+    actions.forEach(([label, fn, primary]) => {
+      const b = document.createElement("button");
+      b.className = "btn small" + (primary ? " primary" : ""); b.type = "button"; b.textContent = label;
+      b.addEventListener("click", () => { $toast.hidden = true; fn && fn(); });
+      $toast.querySelector(".actions").appendChild(b);
+    });
+    $toast.hidden = false;
+    if (ms) toastTimer = setTimeout(() => ($toast.hidden = true), ms);
+  }
+
+  // ---------- Progress link ----------
+  // Each passage gets a short id from its reference, so links survive changes to the session list
+  const refId = ref => { let h = 2166136261; for (const ch of ref) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+  const ALL_REFS = [...new Set(SESSIONS.flatMap(s => [s.main, ...s.optional]).map(p => p.ref))];
+  const BY_ID = new Map(ALL_REFS.map(r => [refId(r), r]));
+  document.getElementById("shareProgress").addEventListener("click", async e => {
+    e.stopPropagation();
+    if (!memorised.size) { toast("Mark some passages as memorised first.", [], 3000); return; }
+    const url = `${location.origin}${location.pathname}#m=${[...memorised].filter(r => ALL_REFS.includes(r)).map(refId).join(".")}`;
+    try {
+      if (navigator.share && matchMedia("(pointer: coarse)").matches) await navigator.share({ title: "My memorised verses", url });
+      else { await navigator.clipboard.writeText(url); toast("Progress link copied. Open it on your other device.", [], 3500); }
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      toast(`Copy this link: <input readonly value="${esc(url)}" style="width:100%;margin-top:6px" onclick="this.select()">`, [["Done"]]);
+    }
+  });
+  (function readProgressLink() {
+    const m = location.hash.match(/^#m=([a-z0-9.]*)$/i);
+    if (!m) return;
+    const refs = m[1].split(".").map(id => BY_ID.get(id)).filter(Boolean);
+    const clear = () => history.replaceState(null, "", location.pathname + location.search);
+    const fresh = refs.filter(r => !memorised.has(r));
+    if (!refs.length) { clear(); return; }
+    if (!fresh.length) { clear(); toast("You already have everything from this progress link.", [], 3500); return; }
+    toast(`This link has <strong>${refs.length}</strong> memorised passage${refs.length > 1 ? "s" : ""}. Add ${fresh.length === refs.length ? "them" : `the ${fresh.length} new one${fresh.length > 1 ? "s" : ""}`} to your progress on this device?`,
+      [["Not now", clear], ["Add", () => { fresh.forEach(r => memorised.add(r)); syncMemorised(); clear(); toast("Progress added.", [], 2500); }, true]]);
+  })();
+
+  // ---------- Practice mode ----------
+  const Practice = (() => {
+    const $el = document.getElementById("practice"), $stage = document.getElementById("pStage"), $count = document.getElementById("pCount");
+    const $shuffle = document.getElementById("pShuffle"), $optional = document.getElementById("pOptional");
+    $shuffle.checked = store.get("qns-p-shuffle") === "1";
+    $optional.checked = store.get("qns-p-optional") === "1";
+    let round = null, lastFocus = null;
+
+    function items() {
+      const seen = new Set(), out = [];
+      SESSIONS.forEach(s => {
+        [[s.main, false], ...s.optional.map(p => [p, true])].forEach(([p, opt]) => {
+          if (opt && !$optional.checked) return;
+          if (!memorised.has(p.ref) || seen.has(p.ref)) return;
+          seen.add(p.ref);
+          out.push({ ref: p.ref, n: s.n, optional: opt, card: cards.find(c => c.p.ref === p.ref) });
+        });
+      });
+      return out;
+    }
+    function start(list) {
+      list = list.slice();
+      if ($shuffle.checked) for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+      round = { list, i: 0, done: [], skipped: [], hint: false, shown: false };
+      draw();
+    }
+    function verses(it) { return resolve(current, Object.assign({}, it.card, { visible: true })); }
+    function report(it) { const t = LICENSED[current]; if (t && t.fums) FUMS.track(t.fums[it.ref]); }
+    function draw() {
+      if (!round) return;
+      const { list, i } = round;
+      if (!list.length) {
+        $count.textContent = "";
+        $stage.innerHTML = `<div class="p-empty"><p>Mark passages as memorised to practise them${$optional.checked ? "" : `, or switch on “Include optional passages”`}.</p></div>`;
+        return;
+      }
+      if (i >= list.length) return summary();
+      const it = list[i], r = verses(it);
+      $count.textContent = `${i + 1} of ${list.length}`;
+      const hint = round.hint && !round.shown
+        ? `<div class="p-hint"><p class="text">${r.vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t.trim().split(/\s+/)[0])}…</span>`).join(" ")}</p></div>` : "";
+      const body = round.shown
+        ? `<p class="text${r.loading ? " loading" : ""}">${verseHTML(r.vs)}</p>`
+        : `${hint}<div class="p-hidden">Tap to reveal</div>`;
+      $stage.innerHTML = `
+        <div class="p-card" id="pCard" role="button" tabindex="0" aria-label="${round.shown ? "Passage" : "Reveal passage"}">
+          <div class="p-meta">Session ${it.n}${it.optional ? ` · <span class="opt">Optional</span>` : ""}</div>
+          <h2 class="p-ref">${esc(it.ref)}</h2>
+          <div class="p-ver">${esc(r.loading ? ABBR[current] : r.label)}</div>
+          ${body}
+          ${r.note ? `<div class="note">${esc(r.note)}</div>` : r.loading && round.shown ? `<div class="note">Loading ${esc(ABBR[current])}…</div>` : ""}
+        </div>
+        <div class="p-actions">
+          ${round.shown
+            ? `<button class="btn ghost" data-act="skip">Skip</button><button class="btn primary" data-act="done">Done</button>`
+            : `<button class="btn ghost" data-act="skip">Skip</button><button class="btn" data-act="hint" ${round.hint ? "disabled" : ""}>Hint</button><button class="btn primary" data-act="reveal">Reveal</button>`}
+        </div>
+        <div class="p-keys">Space: ${round.shown ? "done" : "reveal"} · H: hint · S: skip · Esc: close</div>`;
+    }
+    function summary() {
+      const { done, skipped } = round;
+      $count.textContent = "";
+      $stage.innerHTML = `<div class="p-summary">
+        <h2>Round complete</h2>
+        <p>${done.length} done${skipped.length ? ` · ${skipped.length} skipped` : ""}</p>
+        <div class="p-actions">
+          ${skipped.length ? `<button class="btn primary" data-act="again-skipped">Practise the ${skipped.length} skipped</button>` : ""}
+          <button class="btn${skipped.length ? "" : " primary"}" data-act="again">Start again</button>
+          <button class="btn ghost" data-act="close">Close</button>
+        </div></div>`;
+    }
+    function act(a) {
+      const it = round && round.list[round.i];
+      if (a === "reveal" && it && !round.shown) { round.shown = true; report(it); }
+      else if (a === "hint" && it && !round.shown) { round.hint = true; report(it); }
+      else if ((a === "done" || a === "skip") && it) {
+        (a === "done" ? round.done : round.skipped).push(it);
+        round.i++; round.hint = false; round.shown = false;
+      }
+      else if (a === "again-skipped") return start(round.skipped);
+      else if (a === "again") return start(items());
+      else if (a === "close") return close();
+      draw();
+      const focusEl = $stage.querySelector(".btn.primary") || $stage.querySelector("#pCard");
+      focusEl && focusEl.focus({ preventScroll: true });
+    }
+    function open() {
+      lastFocus = document.activeElement;
+      $el.hidden = false; document.body.classList.add("practising");
+      start(items());
+      document.getElementById("pClose").focus();
+    }
+    function close() {
+      $el.hidden = true; document.body.classList.remove("practising"); round = null;
+      lastFocus && lastFocus.focus && lastFocus.focus();
+    }
+    $stage.addEventListener("click", e => {
+      const b = e.target.closest("[data-act]");
+      if (b) return act(b.dataset.act);
+      if (e.target.closest("#pCard") && round && !round.shown) act("reveal");
+    });
+    document.getElementById("pClose").addEventListener("click", close);
+    $shuffle.addEventListener("change", () => { store.set("qns-p-shuffle", $shuffle.checked ? "1" : "0"); start(items()); });
+    $optional.addEventListener("change", () => { store.set("qns-p-optional", $optional.checked ? "1" : "0"); start(items()); syncMemorised(); });
+    document.addEventListener("keydown", e => {
+      if ($el.hidden) return;
+      if (e.key === "Escape") { e.preventDefault(); return close(); }
+      if (e.target.closest && e.target.closest(".p-settings")) return;
+      const it = round && round.list[round.i];
+      if (!it) return;
+      const k = e.key.toLowerCase();
+      if (k === " " || k === "enter") { if (e.target.closest && e.target.closest("[data-act]")) return; e.preventDefault(); act(round.shown ? "done" : "reveal"); }
+      else if (k === "h") act("hint");
+      else if (k === "s" || e.key === "ArrowRight") act("skip");
+    });
+    return { open, items, refresh: () => { if (!$el.hidden) draw(); } };
+  })();
+  $practiseBtn.addEventListener("click", () => Practice.open());
+  syncMemorised();
 
   setTranslation(store.get("qns-translation") || DEFAULT_ORDER.find(k => ABBR[k]));
   setCompare(store.get("qns-compare") || "");
