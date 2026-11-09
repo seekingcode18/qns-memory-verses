@@ -44,6 +44,11 @@ for s, l in zip(data, LSB):
         p["lsb"] = lp["lsb"]
 html = open(os.path.join(HERE, 'template.html')).read()
 html = html.replace("/*__DATA__*/", json.dumps(data, ensure_ascii=False, indent=1))
+
+# This year's meeting dates (optional). Without it, or once it's out of date, the page shows everything as normal.
+sched_path = os.path.join(HERE, 'schedule.json')
+schedule = json.load(open(sched_path)) if os.path.exists(sched_path) else None
+html = html.replace("/*__SCHEDULE__*/null", json.dumps(schedule, ensure_ascii=False))
 open(os.path.join(HERE, '..', '..', 'index.html'), 'w').write(html)
 for s in data:
     print(s["n"], "|", s["main"]["ref"], "|", " ; ".join(o["ref"] for o in s["optional"]), "|", s["main"]["q"])

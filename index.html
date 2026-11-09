@@ -151,6 +151,36 @@
   }
   .session-label { flex: none; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .session-head .line { flex: 1; height: 1px; background: var(--line); min-width: 16px; }
+  .session-date { flex: none; font-size: .8rem; color: var(--muted); }
+  .now-pill {
+    display: none; flex: none; font: 600 .62rem var(--sans); letter-spacing: .12em; text-transform: uppercase;
+    color: var(--on-accent); background: var(--accent); border-radius: 999px; padding: 3px 8px;
+  }
+  body:not(.focus-mode) .session.is-current .now-pill { display: inline-block; }
+
+  /* "This week first" view */
+  .focus-now { margin-top: 20px; }
+  .focus-eyebrow { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; color: var(--accent); }
+  .focus-next { font-size: .85rem; color: var(--muted); margin-top: 2px; }
+  .focus-now .session { margin-top: 10px; }
+  .group { margin-top: 26px; }
+  .group-head {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 16px; margin: 0;
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; font: inherit; color: inherit;
+    text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .15s;
+  }
+  .group-head:hover { border-color: var(--accent); }
+  .group-head:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .group-title { font-weight: 600; font-size: .95rem; }
+  .group-count { font: 600 .72rem var(--sans); color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+  .group-meta { font-size: .8rem; color: var(--muted); margin-left: auto; text-align: right; }
+  .group-meta strong { color: var(--ok); font-weight: 600; }
+  .group-head .chev { margin-left: 4px; }
+  .group:not(.closed) .group-head .chev { transform: rotate(180deg); }
+  .group.closed .group-body { display: none; }
+  .group-body { padding: 2px 0 0; }
+  .group-body .session { margin-top: 14px; }
+  .group-body .session.collapsed + .session.collapsed { margin-top: 6px; }
 
   .verse-card {
     position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 18px;
@@ -249,7 +279,8 @@
     .hero { padding-top: 40px; }
     .bar .btn span { display: none; }
     .brand { font-size: 1.12rem; }
-    .session.collapsed .session-label { display: none; }
+    .session.collapsed .session-label, .session.collapsed .session-date { display: none; }
+    .group-meta { font-size: .74rem; }
     .session.collapsed .session-ref { max-width: 72vw; }
     .panel { width: min(290px, calc(100vw - 28px)); }
   }
@@ -421,6 +452,7 @@
       <div class="panel" id="panel" role="dialog" aria-label="Display options">
         <div id="panelCompare" hidden><div class="panel-row" id="panelCompareSlot"></div></div>
         <h3>Display</h3>
+        <label class="switch" id="focusRow" hidden><div>Show this week’s session first<small>Earlier and upcoming sessions are grouped</small></div><input type="checkbox" id="focusToggle"></label>
         <label class="switch"><div>Hide optional verses</div><input type="checkbox" data-opt="hide-optional"></label>
         <label class="switch"><div>Reverse session order<small>Newest session first</small></div><input type="checkbox" data-opt="reverse"></label>
         <label class="switch"><div>Dark mode</div><input type="checkbox" id="darkToggle"></label>
@@ -3987,6 +4019,8 @@
   ]
  }
 ];
+  // This year's meeting dates (scripts/build/schedule.json); null if none
+  const SCHEDULE = {"name": "Quieting a Noisy Soul 2026/27", "timeZone": "Europe/London", "startTime": "18:00", "ends": "2027-05-16", "sessions": {"1": "2026-09-13", "2": "2026-09-20", "3": "2026-10-04", "4": "2026-10-11", "5": "2026-10-18", "6": "2026-11-01", "7": "2026-11-08", "8": "2026-11-15", "9": "2026-12-06", "10": "2026-12-13", "11": "2026-12-20", "12": "2027-01-10", "13": "2027-01-17", "14": "2027-02-07", "15": "2027-02-14", "16": "2027-02-21", "17": "2027-03-07", "18": "2027-03-14", "19": "2027-03-21", "20": "2027-04-04", "21": "2027-04-11", "22": "2027-04-18", "23": "2027-05-02", "24": "2027-05-09"}};
 
   const OFFLINE = ["kjv", "bsb", "lsb"];
   const ABBR = { kjv: "KJV", bsb: "BSB", lsb: "LSB", darby: "Darby", ylt: "YLT" };
@@ -3998,6 +4032,55 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const clean = s => s.replace(/\s+/g, " ").trim();
   const verseHTML = vs => vs.map(([v, t]) => `<span class="v"><sup>${esc(v)}</sup>${esc(t)}</span>`).join(" ");
+
+  // ---------- Schedule: which session is "this week" ----------
+  // A session becomes current at its start time (Sunday 6pm, UK time) and stays current until the next one.
+  // The schedule only counts from 6 weeks before the first session to 4 weeks after the course ends; outside that
+  // (e.g. next year, before a new schedule is added) the page simply shows every session as normal.
+  // Preview another moment with ?today=2026-12-06T19:00
+  const Schedule = (() => {
+    const off = { active: false, current: null, next: null };
+    if (!SCHEDULE || !SCHEDULE.sessions) return Object.assign(off, { refresh: () => false });
+    const tz = SCHEDULE.timeZone || "Europe/London";
+    const [hh, mm] = String(SCHEDULE.startTime || "18:00").split(":").map(Number);
+    function zoned(dateStr, h, m) {          // a wall-clock time in the schedule's time zone → Date
+      const [y, mo, d] = dateStr.split("-").map(Number);
+      const guess = Date.UTC(y, mo - 1, d, h, m);
+      try {
+        const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: tz, hourCycle: "h23",
+          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+          .formatToParts(new Date(guess)).map(p => [p.type, p.value]));
+        return new Date(guess - (Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute) - guess));
+      } catch (e) { return new Date(guess); }
+    }
+    const starts = {};
+    try { Object.entries(SCHEDULE.sessions).forEach(([n, d]) => { starts[n] = zoned(d, hh, mm); }); } catch (e) { return Object.assign(off, { refresh: () => false }); }
+    const ns = SESSIONS.map(s => s.n).filter(n => starts[n] && !isNaN(starts[n]));
+    if (!ns.length) return Object.assign(off, { refresh: () => false });
+    const lead = starts[ns[0]].getTime() - 42 * 864e5;
+    const end = zoned(SCHEDULE.ends || SCHEDULE.sessions[ns[ns.length - 1]], 23, 59).getTime() + 28 * 864e5;
+    const fmt = (n, o) => starts[n] ? starts[n].toLocaleDateString("en-GB", Object.assign({ timeZone: tz }, o)) : "";
+    const timeText = (hh % 12 || 12) + (mm ? ":" + String(mm).padStart(2, "0") : "") + (hh < 12 ? "am" : "pm");
+    const S = {
+      active: false, current: null, next: null, first: ns[0],
+      dateShort: n => fmt(n, { day: "numeric", month: "short" }),
+      dateLong: n => fmt(n, { weekday: "short", day: "numeric", month: "short" }) + ", " + timeText,
+      refresh() {                              // returns true if anything changed
+        const q = new URLSearchParams(location.search).get("today");
+        const now = q && !isNaN(new Date(q)) ? new Date(q) : new Date();
+        const before = `${S.active}|${S.current}`;
+        S.active = now >= lead && now <= end;
+        S.current = null; S.next = null;
+        if (S.active) {
+          ns.forEach(n => { if (starts[n] <= now) S.current = n; });
+          S.next = ns.find(n => starts[n] > now) ?? null;
+        }
+        return before !== `${S.active}|${S.current}`;
+      }
+    };
+    S.refresh();
+    return S;
+  })();
 
   const $sessions = document.getElementById("sessions");
   const $select = document.getElementById("translation");
@@ -4059,7 +4142,7 @@
   })();
   let compare = "";   // second version shown alongside, or "" for none
   function reportView(card) {
-    if (!card.visible || card.el.closest(".session.collapsed") || card.el.closest("body.hide-optional .optional")) return;
+    if (!card.visible || card.el.closest(".session.collapsed") || card.el.closest(".group.closed") || card.el.closest("body.hide-optional .optional")) return;
     [current, compare].forEach(k => { const t = LICENSED[k]; if (t && t.fums) FUMS.track(t.fums[card.p.ref]); });
   }
 
@@ -4080,7 +4163,7 @@
     sec.id = "session-" + s.n;
     sec.innerHTML = `
       <h2 class="session-title"><button class="session-head" type="button" aria-expanded="true" aria-controls="body-${s.n}">
-        <span class="session-num">${s.n}</span><span class="session-label">Session ${s.n}</span>
+        <span class="session-num">${s.n}</span><span class="session-label">Session ${s.n}</span><span class="session-date"></span><span class="now-pill">This week</span>
         <span class="session-ref">${esc(s.main.ref)}</span><span class="tick sess-tick" aria-label="Memorised">✓</span><span class="line"></span>
         <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
       </button></h2>
@@ -4340,9 +4423,7 @@
 
   function applyOption(name, on) {
     if (name === "reverse") {
-      const secs = [...$sessions.children].sort((a, b) =>
-        (on ? -1 : 1) * (parseInt(a.id.split("-")[1]) - parseInt(b.id.split("-")[1])));
-      secs.forEach(s => $sessions.appendChild(s));
+      if (window.__layoutReady) layout();
     } else {
       document.body.classList.toggle(name, on);
     }
@@ -4365,35 +4446,123 @@
   });
 
   // ---------- Collapsing sessions ----------
+  // Two sets of collapsed sessions: your saved choices (normal view) and a temporary set for the
+  // "this week first" view, so the focus view never overwrites what you chose.
   const $collapseAll = document.getElementById("collapseAll");
   const sections = [...$sessions.children];
-  let collapsed = new Set();
-  try { collapsed = new Set(JSON.parse(store.get("qns-collapsed") || "[]")); } catch (e) {}
+  const numOf = sec => parseInt(sec.id.split("-")[1]);
+  let saved = new Set();
+  try { saved = new Set(JSON.parse(store.get("qns-collapsed") || "[]")); } catch (e) {}
+  let focusSet = new Set();
+  let focusMode = false;
+  const activeSet = () => focusMode ? focusSet : saved;
 
   function setCollapsed(sec, on) {
     sec.classList.toggle("collapsed", on);
     sec.querySelector(".session-head").setAttribute("aria-expanded", String(!on));
-    const n = parseInt(sec.id.split("-")[1]);
-    on ? collapsed.add(n) : collapsed.delete(n);
+    on ? activeSet().add(numOf(sec)) : activeSet().delete(numOf(sec));
   }
   function syncCollapseAll() {
     const all = sections.every(s => s.classList.contains("collapsed"));
     $collapseAll.querySelector(".lbl").textContent = all ? "Expand all" : "Collapse all";
     $collapseAll.querySelector("svg").style.transform = all ? "rotate(180deg)" : "";
     $collapseAll.setAttribute("aria-pressed", String(all));
-    store.set("qns-collapsed", JSON.stringify([...collapsed]));
+    store.set("qns-collapsed", JSON.stringify([...saved]));
   }
   sections.forEach(sec => {
-    setCollapsed(sec, collapsed.has(parseInt(sec.id.split("-")[1])));
     sec.querySelector(".session-head").addEventListener("click", () => {
       setCollapsed(sec, !sec.classList.contains("collapsed")); syncCollapseAll();
     });
   });
   $collapseAll.addEventListener("click", () => {
     const collapse = !sections.every(s => s.classList.contains("collapsed"));
-    sections.forEach(s => setCollapsed(s, collapse)); syncCollapseAll();
+    sections.forEach(s => setCollapsed(s, collapse));
+    if (!collapse) document.querySelectorAll(".group").forEach(g => setGroup(g, true));
+    syncCollapseAll();
   });
-  syncCollapseAll();
+
+  // ---------- "This week first" view ----------
+  const $focusToggle = document.getElementById("focusToggle");
+  const $focusRow = document.getElementById("focusRow");
+  $focusToggle.checked = store.get("qns-focus") !== "0";          // on by default
+  const groupOpen = { earlier: false, coming: false };            // closed each visit
+  function setGroup(g, open) {
+    g.classList.toggle("closed", !open);
+    g.querySelector(".group-head").setAttribute("aria-expanded", String(open));
+    groupOpen[g.dataset.group] = open;
+    if (open) cards.forEach(c => c.el.closest(".group") === g && c.visible && render(c));
+  }
+  function makeGroup(key, title) {
+    const g = document.createElement("div");
+    g.className = "group closed"; g.dataset.group = key;
+    g.innerHTML = `<button class="group-head" type="button" aria-expanded="false" aria-controls="grp-${key}">
+        <span class="group-title">${title}</span><span class="group-count"></span><span class="group-meta"></span>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button><div class="group-body" id="grp-${key}"></div>`;
+    g.querySelector(".group-head").addEventListener("click", () => setGroup(g, g.classList.contains("closed")));
+    return g;
+  }
+  const $now = document.createElement("div"); $now.className = "focus-now";
+  const $earlier = makeGroup("earlier", "Earlier sessions");
+  const $coming = makeGroup("coming", "Coming up");
+
+  function updateGroups() {
+    const inG = g => [...g.querySelectorAll(".group-body > .session")].map(numOf);
+    const e = inG($earlier), c = inG($coming);
+    $earlier.querySelector(".group-count").textContent = e.length;
+    $coming.querySelector(".group-count").textContent = c.length;
+    const done = e.filter(n => memorised.has(SESSIONS.find(s => s.n === n).main.ref)).length;
+    $earlier.querySelector(".group-meta").innerHTML = e.length ? `<strong>${done}</strong> of ${e.length} memorised` : "";
+    $earlier.hidden = !e.length; $coming.hidden = !c.length;
+  }
+
+  function layout() {
+    const rev = !!document.querySelector('[data-opt="reverse"]:checked');
+    const sorted = arr => arr.slice().sort((a, b) => (rev ? -1 : 1) * (numOf(a) - numOf(b)));
+    const want = Schedule.active && $focusToggle.checked;
+    // Dates and "This week" label (only while the schedule is current)
+    sections.forEach(sec => {
+      const n = numOf(sec);
+      sec.querySelector(".session-date").textContent = Schedule.active ? "· " + Schedule.dateShort(n) : "";
+      sec.classList.toggle("is-current", Schedule.active && Schedule.current === n);
+    });
+    $focusRow.hidden = !Schedule.active;
+    if (want !== focusMode && want) {                  // entering: start fresh each time
+      const anchor = Schedule.current ?? Schedule.first;
+      focusSet = new Set(sections.map(numOf).filter(n => n !== anchor));
+      groupOpen.earlier = groupOpen.coming = false;
+    }
+    focusMode = want;
+    document.body.classList.toggle("focus-mode", focusMode);
+    const set = activeSet();
+    sections.forEach(sec => {
+      sec.classList.toggle("collapsed", set.has(numOf(sec)));
+      sec.querySelector(".session-head").setAttribute("aria-expanded", String(!set.has(numOf(sec))));
+    });
+    if (!focusMode) {
+      $sessions.replaceChildren(...sorted(sections));
+    } else {
+      const anchor = Schedule.current ?? Schedule.first;
+      const cur = sections.find(s => numOf(s) === anchor);
+      const head = Schedule.current
+        ? `<div class="focus-eyebrow">This week · Session ${anchor}</div>
+           <div class="focus-next">${Schedule.next ? `Next: Session ${Schedule.next} · ${esc(Schedule.dateLong(Schedule.next))}` : "This is the last session"}</div>`
+        : `<div class="focus-eyebrow">Starting soon</div>
+           <div class="focus-next">Session ${anchor} · ${esc(Schedule.dateLong(anchor))}</div>`;
+      $now.innerHTML = head; $now.appendChild(cur);
+      $earlier.querySelector(".group-body").replaceChildren(...sorted(sections.filter(s => numOf(s) < anchor)));
+      $coming.querySelector(".group-body").replaceChildren(...sections.filter(s => numOf(s) > anchor).sort((a, b) => numOf(a) - numOf(b)));
+      setGroup($earlier, groupOpen.earlier); setGroup($coming, groupOpen.coming);
+      $sessions.replaceChildren($now, $earlier, $coming);
+      updateGroups();
+    }
+    syncCollapseAll();
+  }
+  $focusToggle.addEventListener("change", () => { store.set("qns-focus", $focusToggle.checked ? "1" : "0"); layout(); });
+  // If the page is left open over a Sunday evening, move on to the new session when it's next viewed
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && window.__layoutReady && Schedule.refresh()) { focusMode = false; layout(); syncMemorised(); }
+  });
 
   // ---------- Memorised (per passage, across all versions; saved in this browser) ----------
   let memorised = new Set();
@@ -4414,6 +4583,7 @@
     const optRefs = new Set(SESSIONS.flatMap(s => s.optional.map(p => p.ref)).filter(r => !SESSIONS.some(s => s.main.ref === r)));
     const optDone = [...optRefs].filter(r => memorised.has(r)).length;
     $progress.innerHTML = `<strong>${mainDone}</strong> of ${SESSIONS.length} primary passages memorised` + (optDone ? ` · ${optDone} optional` : "");
+    if (focusMode) updateGroups();
     const n = Practice.items().length;
     $practiseBtn.textContent = n ? `Practise (${n})` : "Practise";
     $practiseBtn.disabled = !n;
@@ -4477,6 +4647,8 @@
     const $help = document.getElementById("pHelp"), $keys = document.getElementById("pKeys");
     let shuffle = store.get("qns-p-shuffle") === "1";
     let withOptional = store.get("qns-p-optional") === "1";
+    let soFar = store.get("qns-p-sofar") !== "0";                   // on by default
+    const limitToSoFar = () => Schedule.active && soFar;
     let phase = "setup", round = null, lastFocus = null;
 
     function items() {
@@ -4484,6 +4656,7 @@
       SESSIONS.forEach(s => {
         [[s.main, false], ...s.optional.map(p => [p, true])].forEach(([p, opt]) => {
           if (opt && !withOptional) return;
+          if (limitToSoFar() && (Schedule.current == null || s.n > Schedule.current)) return;
           if (!memorised.has(p.ref) || seen.has(p.ref)) return;
           seen.add(p.ref);
           out.push({ ref: p.ref, n: s.n, optional: opt, card: cards.find(c => c.p.ref === p.ref) });
@@ -4505,11 +4678,17 @@
           <div class="opts">
             <label class="switch"><span>Shuffle</span><input type="checkbox" id="pShuffle" ${shuffle ? "checked" : ""}></label>
             <label class="switch"><span>Include optional passages</span><input type="checkbox" id="pOptional" ${withOptional ? "checked" : ""}></label>
+            ${Schedule.active ? `<label class="switch"><span>Only sessions so far${Schedule.current ? ` (1–${Schedule.current})` : ""}</span><input type="checkbox" id="pSoFar" ${soFar ? "checked" : ""}></label>` : ""}
           </div>
           <div>${n ? `<button class="btn primary" data-act="start">Start</button>`
                    : `<p class="p-empty">Mark passages as memorised to practise them${withOptional ? "" : `, or include optional passages`}.</p>`}</div>
         </div></div>`;
       $stage.querySelector("#pShuffle").addEventListener("change", e => { shuffle = e.target.checked; store.set("qns-p-shuffle", shuffle ? "1" : "0"); });
+      const $sf = $stage.querySelector("#pSoFar");
+      $sf && $sf.addEventListener("change", e => {
+        soFar = e.target.checked; store.set("qns-p-sofar", soFar ? "1" : "0"); syncMemorised(); setup();
+        const o = $stage.querySelector("#pSoFar"); o && o.focus();
+      });
       $stage.querySelector("#pOptional").addEventListener("change", e => {
         withOptional = e.target.checked; store.set("qns-p-optional", withOptional ? "1" : "0"); syncMemorised(); setup();
         const o = $stage.querySelector("#pOptional"); o && o.focus();
@@ -4644,6 +4823,8 @@
     return { open, items, refresh: () => { if (!$el.hidden && phase === "round") draw(); } };
   })();
   $practiseBtn.addEventListener("click", () => Practice.open());
+  window.__layoutReady = true;
+  layout();
   syncMemorised();
 
   setTranslation(store.get("qns-translation") || DEFAULT_ORDER.find(k => ABBR[k]));
